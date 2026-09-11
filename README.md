@@ -16,8 +16,7 @@
 
 ## 当前线上版本
 
-- 桌面网页版（响应式）：https://ad6172f97822a5581.app.workbuddy.link
-- 备用域名：https://ad6172f97822a5581.app.workbuddy.host
+- 桌面网页版（响应式）：https://intp41455.github.io/neuroos/
 
 > 同一链接同时适配电脑大屏和手机小屏。
 
