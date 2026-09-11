@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1117">
+<title>大象切片器 · ADHD 任务拆解器</title>
+<style>
+:root{
+  --bg:#0f1117; --bg2:#151a23; --card:#1a2029; --card2:#212936;
+  --line:#2a3340; --text:#e8ecf3; --muted:#8b98ab;
+  --accent:#7c9cff; --accent2:#ffb057; --ok:#4ade80; --warn:#f87171; --pink:#f472b6;
+  --r:14px; --shadow:0 6px 24px rgba(0,0,0,.35);
+}
+html[data-theme="light"]{
+  --bg:#f4f6fa; --bg2:#eceff5; --card:#ffffff; --card2:#f2f5fa;
+  --line:#e0e5ee; --text:#1a2029; --muted:#6b7889;
+  --shadow:0 6px 20px rgba(20,30,50,.10);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px;line-height:1.6;padding-bottom:96px;overscroll-behavior-y:none}
+button{font-family:inherit;font-size:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit;font-size:inherit;color:inherit;background:var(--bg2);
+  border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:70px}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+
+.wrap{max-width:860px;margin:0 auto;padding:0 14px}
+.hide{display:none!important}
+.muted{color:var(--muted)}
+.tiny{font-size:12px}
+.row{display:flex;gap:8px;align-items:center}
+.row.wrap{flex-wrap:wrap}
+.between{justify-content:space-between}
+.grow{flex:1;min-width:0}
+.ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* 顶栏 */
+.topbar{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid var(--line);
+  padding:10px 0 8px}
+.topbar h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.5px}
+.logo{display:inline-block;transform:rotate(-8deg)}
+
+/* 卡片 */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.card.tight{padding:10px 12px}
+h2.sec{font-size:13px;color:var(--muted);margin:20px 0 8px;font-weight:600;letter-spacing:1px}
+
+/* 按钮 */
+.btn{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:9px 14px;
+  font-weight:600;transition:transform .08s,filter .15s;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn:active{transform:scale(.96)}
+.btn.pri{background:var(--accent);color:#0d1220;border-color:transparent}
+.btn.ok{background:var(--ok);color:#08240f;border-color:transparent}
+.btn.warn{background:transparent;border-color:var(--warn);color:var(--warn)}
+.btn.sm{padding:6px 10px;font-size:13px;border-radius:9px}
+.btn.xs{padding:4px 8px;font-size:12px;border-radius:8px}
+.btn.block{width:100%}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* 徽章 */
+.badge{font-size:11px;padding:2px 7px;border-radius:99px;background:var(--card2);
+  border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.hi{background:rgba(255,176,87,.15);color:var(--accent2);border-color:transparent}
+.badge.lo{background:rgba(124,156,255,.15);color:var(--accent);border-color:transparent}
+.badge.ok{background:rgba(74,222,128,.15);color:var(--ok);border-color:transparent}
+
+/* 任务节点 */
+.node{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:11px;
+  background:var(--card2);border:1px solid transparent;margin-bottom:6px;transition:.15s}
+.node:hover{border-color:var(--line)}
+.node.done{opacity:.5}
+.node.done .nt{text-decoration:line-through}
+.node.cur{border-color:var(--accent);background:rgba(124,156,255,.10)}
+.chk{width:21px;height:21px;min-width:21px;border-radius:7px;border:2px solid var(--line);
+  margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:12px;
+  color:transparent;transition:.15s;flex-shrink:0}
+.chk.on{background:var(--ok);border-color:var(--ok);color:#08240f}
+.node .nt{font-weight:500;word-break:break-word}
+.kids{margin-left:16px;padding-left:12px;border-left:2px solid var(--line);margin-top:6px}
+
+/* 进度条 */
+.bar{height:7px;background:var(--bg2);border-radius:99px;overflow:hidden}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--ok));
+  border-radius:99px;transition:width .4s}
+
+/* 项目卡 */
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:13px;margin-bottom:10px;border-left:4px solid var(--accent)}
+.pcard h3{margin:0 0 4px;font-size:16px}
+
+/* Tabbar */
+.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:40;background:var(--bg2);
+  border-top:1px solid var(--line);display:flex;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+.tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:5px 2px;border-radius:11px;color:var(--muted);font-size:11px}
+.tabbar button.on{color:var(--accent);background:var(--card)}
+.tabbar .ic{font-size:19px;line-height:1}
+
+/* 弹层 */
+.overlay{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.6);display:flex;
+  align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)}
+.sheet{background:var(--bg);width:100%;max-width:600px;max-height:88vh;overflow-y:auto;
+  border-radius:20px 20px 0 0;padding:18px 16px calc(24px + env(safe-area-inset-bottom));
+  box-shadow:var(--shadow);animation:up .22s ease}
+@keyframes up{from{transform:translateY(24px);opacity:.5}to{transform:none;opacity:1}}
+.sheet h3{margin:0 0 12px;font-size:17px}
+.grab{width:38px;height:4px;background:var(--line);border-radius:9px;margin:0 auto 14px}
+
+/* 专注层 */
+#focus{position:fixed;inset:0;z-index:80;background:var(--bg);display:flex;flex-direction:column;
+  padding:24px 20px calc(20px + env(safe-area-inset-bottom));overflow-y:auto}
+.ring{width:210px;height:210px;margin:8px auto;position:relative}
+.ring svg{transform:rotate(-90deg)}
+.ring .num{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;font-size:38px;font-weight:700;
+  font-variant-numeric:tabular-nums;letter-spacing:-1px}
+.ring .num small{font-size:12px;font-weight:500;color:var(--muted);letter-spacing:1px}
+.park{background:var(--card);border:1px dashed var(--line);border-radius:11px;padding:10px}
+
+/* 提示 */
+#toast{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:99;
+  background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 18px;
+  box-shadow:var(--shadow);font-weight:600;opacity:0;pointer-events:none;transition:.25s}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(-8px)}
+
+/* 洞察图表 */
+.spark{display:flex;align-items:flex-end;gap:5px;height:88px;margin-top:8px}
+.spark div{flex:1;background:var(--card2);border-radius:5px 5px 0 0;position:relative;min-height:3px}
+.spark div b{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:10px;color:var(--muted);font-weight:500}
+.spark div.on{background:linear-gradient(180deg,var(--accent),rgba(124,156,255,.25))}
+.kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+.kv:last-child{border:none}
+
+/* 彩带 */
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:95}
+.cf{position:absolute;width:9px;height:9px;border-radius:2px;animation:fall 1.5s ease-in forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg);opacity:.2}}
+
+.empty{text-align:center;padding:36px 18px;color:var(--muted)}
+.empty .big{font-size:44px;display:block;margin-bottom:10px}
+.chip{background:var(--card2);border:1px solid var(--line);border-radius:99px;
+  padding:5px 12px;font-size:13px;display:inline-block;margin:0 6px 6px 0}
+.chip.on{background:var(--accent);color:#0d1220;border-color:transparent;font-weight:600}
+.est{font-variant-numeric:tabular-nums}
+.stat{text-align:center;flex:1}
+.stat b{display:block;font-size:22px;line-height:1.2}
+.stat span{font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="wrap">
+  <div class="row between">
+    <h1><span class="logo">🐘</span> 大象切片器</h1>
+    <div class="row">
+      <button class="btn xs ghost" id="btn-theme" title="切换主题">🌓</button>
+      <button class="btn xs ghost" id="btn-set" title="设置">⚙️</button>
+    </div>
+  </div>
+</div></div>
+
+<main class="wrap" id="view"></main>
+
+<nav class="tabbar" id="tabbar"></nav>
+
+<div id="modal"></div>
+<div id="focus" class="hide"></div>
+<div id="toast"></div>
+<canvas id="confetti"></canvas>
+
+<script>
+/* ============ 数据层 ============ */
+const KEY = 'adhd-planner-v1';
+const uid = () => Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4);
+const DAY = 864e5;
+const todayKey = () => new Date().toLocaleDateString('sv');
+const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
+
+const DEF = () => ({
+  projects: [], inbox: [], sessions: [],
+  settings: { focus:25, brk:5, longbrk:15, cycle:4, theme:'dark', autoNext:true },
+  meta: { created:Date.now(), streak:0, lastDay:null, best:0, pomos:0 }
+});
+
+let S = load();
+function load(){
+  try{
+    const r = JSON.parse(localStorage.getItem(KEY));
+    if(r && r.projects) return Object.assign(DEF(), r, {
+      settings:Object.assign(DEF().settings, r.settings||{}),
+      meta:Object.assign(DEF().meta, r.meta||{})
+    });
+  }catch(e){}
+  return DEF();
+}
+let saveT;
+function save(){ clearTimeout(saveT); saveT = setTimeout(()=>localStorage.setItem(KEY, JSON.stringify(S)), 120); }
+
+/* ============ 树操作 ============ */
+function walk(nodes, fn, parent=null, depth=0){
+  for(const n of nodes){ fn(n, parent, depth); if(n.children?.length) walk(n.children, fn, n, depth+1); }
+}
+function findNode(id){
+  let hit=null;
+  for(const p of S.projects) walk(p.nodes, (n,par,d)=>{ if(n.id===id) hit={node:n,parent:par,project:p}; });
+  return hit;
+}
+function nodeStats(n){
+  let total=0, done=0;
+  if(n.children?.length) n.children.forEach(c=>{ const s=nodeStats(c); total+=s.total; done+=s.done; });
+  else { total=1; if(n.done) done=1; }
+  return {total, done, pct: total? Math.round(done/total*100):0};
+}
+function allSteps(){ const a=[]; for(const p of S.projects) walk(p.nodes, n=>{ if(!n.children?.length) a.push({n,p}); }); return a; }
+function pendingSteps(){
+  return allSteps().filter(x => !x.n.done).map(x=>({
+    ...x, today: x.n.today || hasTodayAncestor(x.p.nodes, x.n.id)
+  }));
+}
+function hasTodayAncestor(nodes, id){
+  let f=false;
+  walk(nodes, (n)=>{ if(n.id===id && f===false){ let p=n; } });
+  // 简化：检查路径上是否有 today 标记
+  let found=false;
+  const dfs=(ns, path)=>{ for(const n of ns){ const np=[...path,n]; if(n.id===id){ found=np.some(x=>x.today); return; } if(n.children?.length) dfs(n.children,np); } };
+  dfs(nodes,[]);
+  return found;
+}
+
+/* ============ 拆分模板库 ============ */
+const TEMPLATES = [
+  { k:['写','报告','文档','论文','总结','方案','材料','汇报','文案','文章','稿'],
+    name:'写作/文档类',
+    steps:[['列出要写哪几个部分（只要标题，不写内容）',8],
+           ['把相关资料/数据丢进一个地方',15],
+           ['写第一版草稿（允许写得烂）',25],
+           ['补数据和例子',20],
+           ['通读一遍改掉别扭的地方',15],
+           ['排版、命名、归档',8]] },
+  { k:['整理','清理','收拾','收纳','归档','打扫','归类','断舍离'],
+    name:'整理/清理类',
+    steps:[['划定范围：只做这一个抽屉/文件夹',5],
+           ['全部拿出来或列出来',10],
+           ['分成 保留 / 丢掉 / 待定 三类',20],
+           ['把"丢掉"的立刻处理掉',10],
+           ['把"保留"的放回固定位置',20],
+           ['拍照记录成果，以后知道放哪',2]] },
+  { k:['学','备考','看书','课程','复习','研究','教程','入门'],
+    name:'学习/备考类',
+    steps:[['写清"学完能做什么"这一句话',5],
+           ['找齐资料/课程/书',10],
+           ['把章节列成清单',10],
+           ['第一遍快速过，不求记住',30],
+           ['做题/写笔记输出一遍',25],
+           ['只复盘错的地方',20]] },
+  { k:['联系','沟通','会议','协调','对接','通知','回访','拜访','电话','邮件','消息'],
+    name:'沟通/协调类',
+    steps:[['写下这次沟通要达成的一个结果',5],
+           ['列出要找的人和联系方式',5],
+           ['起草要说的话（3 个要点）',10],
+           ['发出第一批消息/邮件',10],
+           ['记录谁回了、谁没回',5],
+           ['跟进没回的人',10]] },
+  { k:['策划','活动','项目','上线','发布','筹备','组织','方案设计'],
+    name:'策划/项目类',
+    steps:[['写清目标和"怎样算成功"',10],
+           ['列出需要的资源/预算/人',15],
+           ['拆成具体子任务清单',20],
+           ['按截止日倒推排时间',10],
+           ['跟关键人确认一遍',10],
+           ['从头到尾过一遍流程查漏洞',15]] },
+  { k:['买','办','跑','申请','报销','提交','预约','体检','装修','搬家','行政'],
+    name:'事务/跑腿类',
+    steps:[['确认办成的标准是什么',3],
+           ['查好地点/时间/要带的材料',5],
+           ['放进日历并设提醒',3],
+           ['把要带的东西提前装好',5],
+           ['去办',20],
+           ['结果归档/反馈给相关人',5]] },
+  { k:['代码','开发','程序','系统','接口','bug','功能','网站','app','脚本'],
+    name:'开发/技术类',
+    steps:[['写清输入是什么、输出是什么',10],
+           ['搭一个能跑起来的最小骨架',20],
+           ['实现核心那条主流程',30],
+           ['自己测一遍并修问题',20],
+           ['清理代码 + 提交/备份',10]] },
+  { k:['健身','运动','减肥','习惯','打卡','作息','饮食'],
+    name:'习惯/健康类',
+    steps:[['把目标换成今天就能做的具体动作',5],
+           ['准备装备/环境（放到看得见的地方）',5],
+           ['做最小版本（哪怕只有 5 分钟）',10],
+           ['记录一次完成情况',2],
+           ['设一个固定触发时机（如刷完牙）',5]] }
+];
+const GENERIC = [['想清楚"做完的样子"是什么',5],['把要用的东西准备齐',10],
+  ['做出最小可用版本（不求完美）',25],['检查补漏',15],['收尾、归档、告诉相关的人',5]];
+
+function matchTemplate(text){
+  const t = text.toLowerCase();
+  for(const tpl of TEMPLATES) if(tpl.k.some(k=>t.includes(k))) return tpl;
+  return {name:'通用流程', steps:GENERIC};
+}
+// 再切一刀：把一步拆成更小的三步
+function subSplit(n){
+  const e = Math.max(5, n.est||15);
+  const a = Math.max(2, Math.round(e*0.25)), b = Math.max(3, Math.round(e*0.5)), c = Math.max(2, Math.round(e*0.25));
+  return [['先准备：打开/拿齐需要的东西', a],['做核心的那一下', b],['收尾放好、记一笔', c]];
+}
+// 2分钟启动版
+function twoMinVersion(title){
+  return '只用 2 分钟：打开『'+title+'』，做掉最先看到的那一小块';
+}
+
+/* ============ 视图路由 ============ */
+const TABS = [
+  {id:'inbox',  ic:'🧠', name:'收件箱'},
+  {id:'proj',   ic:'🐘', name:'项目'},
+  {id:'today',  ic:'☀️', name:'今天'},
+  {id:'stats',  ic:'📊', name:'洞察'}
+];
+let TAB = 'today';
+let openProj = null;
+let focusState = null; // {nodeId, start, elapsed, running}
+let ticker = null;
+
+function renderTabs(){
+  document.getElementById('tabbar').innerHTML = TABS.map(t=>
+    `<button data-tab="${t.id}" class="${TAB===t.id?'on':''}"><span class="ic">${t.ic}</span>${t.name}</button>`
+  ).join('') + `<button data-tab="focus" class="${focusState?'on':''}"><span class="ic">🎯</span>专注</button>`;
+}
+
+function render(){
+  document.documentElement.dataset.theme = S.settings.theme;
+  renderTabs();
+  const v = document.getElementById('view');
+  const fn = {inbox:vInbox, proj:vProjects, today:vToday, stats:vStats}[TAB] || vToday;
+  v.innerHTML = fn();
+  if(TAB==='proj' && openProj) setTimeout(bindProj,0);
+  renderFocus();
+}
+
+/* ============ 收件箱：脑倾倒 ============ */
+function vInbox(){
+  const items = S.inbox.slice().reverse();
+  return `
+  <div class="card tight" style="background:linear-gradient(135deg,rgba(124,156,255,.12),transparent)">
+    <div class="row" style="align-items:flex-start;gap:10px">
+      <div style="font-size:22px">🧠</div>
+      <div class="grow">
+        <b>大脑倾倒区</b>
+        <div class="tiny muted">脑子里冒出来的东西,先倒在这里。不用分类、不用排序,倒完脑子就空了。</div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <input id="dump" class="grow" placeholder="想到什么就写什么,回车添加…">
+      <button class="btn pri" data-act="dump-add">添加</button>
+    </div>
+  </div>
+
+  <h2 class="sec">待处理 · ${items.length}</h2>
+  ${items.length? items.map(i=>`
+    <div class="card tight row between">
+      <div class="grow"><div>${esc(i.text)}</div><div class="tiny muted">${new Date(i.t).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>
+      <div class="row">
+        <button class="btn xs" data-act="dump-2proj" data-id="${i.id}">→ 变成项目</button>
+        <button class="btn xs ghost" data-act="dump-del" data-id="${i.id}">✕</button>
+      </div>
+    </div>`).join('') : `<div class="empty"><span class="big">🫧</span>空的。清爽。</div>`}
+  `;
+}
+
+/* ============ 项目列表 ============ */
+function vProjects(){
+  if(openProj){
+    const p = S.projects.find(x=>x.id===openProj);
+    if(!p){ openProj=null; return vProjects(); }
+    return vProject(p);
+  }
+  const ps = S.projects;
+  return `
+  <div class="row between" style="margin:6px 0 10px">
+    <h2 class="sec" style="margin:0">我的大象 · ${ps.length}</h2>
+    <button class="btn sm pri" data-act="new-proj">+ 新项目</button>
+  </div>
+  <div class="card tight tiny muted" style="margin-bottom:14px">
+    💡 超过 2 小时的任务,别直接做。先拆成"25 分钟以内、闭着眼也能开始"的小块,再动手。
+  </div>
+  ${ps.length? ps.map(p=>{
+    const s = nodeStats({children:p.nodes});
+    const due = p.due? Math.ceil((new Date(p.due)-Date.now())/DAY): null;
+    return `<div class="pcard" style="border-left-color:${p.color}">
+      <div class="row between">
+        <h3 class="grow ell" data-act="open-proj" data-id="${p.id}" style="cursor:pointer">${esc(p.title)}</h3>
+        <span class="badge ${due!==null&&due<3?'hi':''}">${due===null?'无截止':(due<0?'已逾期 '+(-due)+'天':due===0?'今天':due+'天后')}</span>
+      </div>
+      <div class="tiny muted" style="margin-bottom:7px">${p.nodes.length} 个任务 · ${s.done}/${s.total} 步完成</div>
+      <div class="bar"><i style="width:${s.pct}%"></i></div>
+      <div class="row" style="margin-top:9px">
+        <button class="btn xs" data-act="open-proj" data-id="${p.id}">打开拆解</button>
+        <button class="btn xs" data-act="quick-focus" data-id="${p.id}">🎯 直接开始下一步</button>
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty"><span class="big">🐘</span>
+    还没有大象。<br><span class="tiny">点上面的"+ 新项目",或者先去收件箱把脑子倒干净。</span></div>`}
+  `;
+}
+
+/* ============ 项目详情（拆解工作台） ============ */
+function vProject(p){
+  const s = nodeStats({children:p.nodes});
+  const big = [];
+  walk(p.nodes, n=>{ if((n.est||0) > 45 && !n.done) big.push(n); });
+  const tree = p.nodes.map(n=>nodeHTML(n,p)).join('') ||
+    `<div class="empty tiny" style="padding:22px">还没有任务。在下面输入你想做的第一件事。</div>`;
+
+  return `
+  <div class="row" style="margin:6px 0 10px">
+    <button class="btn xs ghost" data-act="back-proj">‹ 返回</button>
+    <div class="grow"></div>
+    <button class="btn xs" data-act="edit-proj" data-id="${p.id}">编辑</button>
+  </div>
+
+  <div class="pcard" style="border-left-color:${p.color};margin-bottom:12px">
+    <h3>${esc(p.title)}</h3>
+    ${p.why?`<div class="tiny muted" style="margin-bottom:8px">🎯 ${esc(p.why)}</div>`:''}
+    <div class="row between tiny muted" style="margin-bottom:5px">
+      <span>总进度</span><span class="est">${s.done}/${s.total} · ${s.pct}%</span>
+    </div>
+    <div class="bar"><i style="width:${s.pct}%"></i></div>
+  </div>
+
+  ${big.length? `<div class="card tight" style="border-color:var(--accent2);background:rgba(255,176,87,.08)">
+    <b class="tiny">⚠️ 有 ${big.length} 块超过 45 分钟</b>
+    <div class="tiny muted">这类最容易卡住。点任务右边的"🔪"把它切小。</div>
+  </div>`:''}
+
+  <h2 class="sec">任务树</h2>
+  <div id="tree">${tree}</div>
+
+  <h2 class="sec">加任务（一句话就行）</h2>
+  <div class="card">
+    <input id="ntitle" placeholder="例如：写季度总结 / 整理客户资料">
+    <div class="row" style="margin-top:8px">
+      <select id="nmode" style="flex:1.4">
+        <option value="auto">🔮 自动拆分（推荐）</option>
+        <option value="single">只加一条，我自己拆</option>
+        <option value="flow">按流程拆：准备→做→收尾</option>
+        <option value="mvp">按最小可行拆</option>
+        <option value="guide">🤔 我不知道从哪下手…</option>
+      </select>
+      <button class="btn pri" data-act="add-task">添加</button>
+    </div>
+    <div class="tiny muted" style="margin-top:7px">自动拆分会根据这句话里的动词,套用对应的模板生成 5-6 个可执行小步骤。</div>
+  </div>
+
+  <div class="row" style="margin:14px 0 30px">
+    <button class="btn sm block" data-act="pick-next" data-id="${p.id}">🎲 帮我挑一件开始</button>
+    <button class="btn sm block" data-act="focus-proj" data-id="${p.id}">🎯 专注下一步</button>
+  </div>`;
+}
+
+function nodeHTML(n, p, depth=0){
+  const st = nodeStats(n);
+  const isLeaf = !n.children?.length;
+  const est = n.est||0;
+  const ecls = est<=15 ? 'ok' : (est>45 ? 'hi' : '');
+  const kids = n.children?.length ? `<div class="kids">${n.children.map(c=>nodeHTML(c,p,depth+1)).join('')}</div>` : '';
+  return `
+  <div class="node ${n.done?'done':''}" data-node="${n.id}">
+    <button class="chk ${n.done?'on':''}" data-act="toggle" data-id="${n.id}">✓</button>
+    <div class="grow">
+      <div class="row" style="gap:6px;flex-wrap:wrap">
+        <span class="nt grow">${esc(n.title)}</span>
+        ${isLeaf? `<span class="badge ${ecls}">${est}分</span>`:
+                  `<span class="badge">${st.done}/${st.total}</span>`}
+        ${n.today? `<span class="badge lo">今天</span>`:''}
+      </div>
+      ${!isLeaf? `<div class="bar" style="height:5px;margin-top:5px"><i style="width:${st.pct}%"></i></div>`:''}
+      <div class="row wrap" style="margin-top:6px;gap:5px">
+        <button class="btn xs ghost" data-act="focus" data-id="${n.id}">▶ 做这个</button>
+        <button class="btn xs ghost" data-act="split" data-id="${n.id}">🔪 切小</button>
+        ${!n.today? `<button class="btn xs ghost" data-act="today" data-id="${n.id}">☀️ 加入今天</button>`
+                  : `<button class="btn xs ghost" data-act="untoday" data-id="${n.id}">↩︎ 移出今天</button>`}
+        <button class="btn xs ghost" data-act="del" data-id="${n.id}">🗑</button>
+      </div>
+    </div>
+  </div>
+  ${kids}`;
+}
+
+function bindProj(){
+  // 折叠/展开由按钮触发，无需额外绑定
+}
+
+/* ============ 今天 ============ */
+function vToday(){
+  const all = pendingSteps();
+  const todays = all.filter(x=>x.today);
+  const list = todays.length? todays : all.slice(0,5);
+  const doneToday = S.sessions.filter(s=>s.end && new Date(s.end).toLocaleDateString('sv')===todayKey() && s.finished).length;
+  const hours = new Date().getHours();
+  const energyHint = hours<11?'早上：脑子相对清楚，适合啃硬骨头'
+    : hours<14?'中午前后：容易犯困，安排机械性活儿'
+    : hours<18?'下午：状态回升，适合推进主任务'
+    : '晚上：别安排需要意志力的事，做收尾类的小事';
+
+  return `
+  <div class="card" style="background:linear-gradient(135deg,rgba(74,222,128,.12),transparent)">
+    <div class="row">
+      <div style="font-size:26px">${doneToday>=3?'🔥':doneToday>=1?'🌱':'☀️'}</div>
+      <div class="grow">
+        <b>今天已经完成 ${doneToday} 步</b>
+        <div class="tiny muted">${energyHint}</div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px;gap:20px">
+      <div class="stat"><b>${S.meta.streak||0}</b><span>连续天数</span></div>
+      <div class="stat"><b>${doneToday}</b><span>今日步数</span></div>
+      <div class="stat"><b>${all.length}</b><span>剩余步骤</span></div>
+    </div>
+  </div>
+
+  ${todays.length>3? `<div class="card tight" style="border-color:var(--accent2);background:rgba(255,176,87,.08)">
+    <b class="tiny">⚠️ 今天排了 ${todays.length} 件</b>
+    <div class="tiny muted">ADHD 大脑会高估自己的产能。建议只留 3 件,其余移出今天——不是放弃,是排期。</div>
+  </div>`:''}
+
+  <h2 class="sec">${todays.length?'今天要做':'最快的几件事（还没排今天）'}</h2>
+  ${list.length? list.map((x,i)=>`
+    <div class="node ${i===0?'cur':''}">
+      <button class="chk" data-act="toggle" data-id="${x.n.id}">✓</button>
+      <div class="grow">
+        <div class="row" style="gap:6px;flex-wrap:wrap">
+          <span class="nt grow">${esc(x.n.title)}</span>
+          <span class="badge ${(x.n.est||0)<=15?'ok':''}">${x.n.est||0}分</span>
+        </div>
+        <div class="tiny muted">${esc(x.p.title)}</div>
+        <div class="row" style="margin-top:6px;gap:5px">
+          <button class="btn xs pri" data-act="focus" data-id="${x.n.id}">▶ 开始</button>
+          <button class="btn xs ghost" data-act="two-min" data-id="${x.n.id}">⚡ 2分钟版</button>
+          ${x.today?`<button class="btn xs ghost" data-act="untoday" data-id="${x.n.id}">↩︎移出</button>`:''}
+        </div>
+      </div>
+    </div>`).join('')
+    : `<div class="empty"><span class="big">✅</span>没有待办。要么你很猛,要么还没建项目。</div>`}
+
+  <div class="row" style="margin:16px 0 30px;gap:8px">
+    <button class="btn sm block" data-act="pick-next">🎲 帮我随便挑一件</button>
+    <button class="btn sm block" data-act="focus-next">🎯 专注下一件</button>
+  </div>`;
+}
+
+/* ============ 洞察 ============ */
+function vStats(){
+  const fin = S.sessions.filter(s=>s.finished && s.est>0);
+  const ratio = fin.length? fin.reduce((a,s)=>a + s.secs/60/s.est, 0)/fin.length : 0;
+  const totalMin = Math.round(S.sessions.reduce((a,s)=>a+s.secs,0)/60);
+  const days = [...Array(7)].map((_,i)=>{
+    const d = new Date(Date.now() - (6-i)*DAY).toLocaleDateString('sv');
+    return { d, n: S.sessions.filter(s=>s.finished && new Date(s.end).toLocaleDateString('sv')===d).length };
+  });
+  const max = Math.max(1, ...days.map(x=>x.n));
+  const minEst = Math.round(S.sessions.reduce((a,s)=>a+s.secs,0)/60);
+
+  return `
+  <h2 class="sec">时间感知校准</h2>
+  <div class="card">
+    ${fin.length<3 ? `<div class="tiny muted">完成 3 个以上带预估的步骤后,这里会告诉你:你通常低估还是高估自己的耗时。</div>`
+    : `<div style="font-size:30px;font-weight:700;color:${ratio>1.3?'var(--warn)':ratio<0.8?'var(--accent)':'var(--ok)'}">
+        实际是预估的 ${ratio.toFixed(1)} 倍</div>
+      <div class="tiny muted" style="margin-top:4px">
+        ${ratio>1.3? '你严重低估耗时——这是 ADHD 的典型"计划谬误"。下次排期时,把你的估计自动乘以 '+ratio.toFixed(1)+' 再排。'
+        : ratio<0.8? '你高估了耗时,说明任务其实没你想的那么可怕。可以把块切大一点。'
+        : '估得挺准,继续保持。'}</div>
+      <div class="kv" style="margin-top:12px"><span class="muted">样本数</span><b>${fin.length} 步</b></div>`}
+  </div>
+
+  <h2 class="sec">最近 7 天完成步数</h2>
+  <div class="card">
+    <div class="spark">${days.map(x=>`
+      <div class="${x.n?'on':''}" style="height:${Math.max(4, x.n/max*80)}px"><b>${x.n||''}</b></div>`).join('')}</div>
+    <div class="row between tiny muted" style="margin-top:6px"><span>7天前</span><span>今天</span></div>
+  </div>
+
+  <h2 class="sec">累计</h2>
+  <div class="card">
+    <div class="kv"><span class="muted">累计专注时长</span><b class="est">${Math.floor(totalMin/60)} 小时 ${totalMin%60} 分</b></div>
+    <div class="kv"><span class="muted">完成步骤总数</span><b>${S.sessions.filter(s=>s.finished).length}</b></div>
+    <div class="kv"><span class="muted">最长连续天数</span><b>${S.meta.best||0} 天</b></div>
+    <div class="kv"><span class="muted">已完成番茄</span><b>${S.meta.pomos||0}</b></div>
+    <div class="kv"><span class="muted">半途放弃次数</span><b>${S.sessions.filter(s=>!s.finished && s.secs>60).length}</b></div>
+  </div>
+
+  <div class="card tight tiny muted" style="margin-bottom:30px">
+    中断不是失败。数据里"放弃次数"只是帮你发现:是不是某类任务总被中断——那说明它切得还不够小。
+  </div>`;
+}
+
+/* ============ 专注层 ============ */
+function startFocus(id, opts={}){
+  const f = findNode(id); if(!f) return toast('找不到这个步骤');
+  const target = (f.node.est||25)*60;
+  focusState = { id, start:Date.now(), elapsed:0, running:true, target, twoMin:!!opts.twoMin, parking:[] };
+  if(ticker) clearInterval(ticker);
+  ticker = setInterval(()=>{ if(focusState?.running){ focusState.elapsed = Math.round((Date.now()-focusState.start)/1000 + (focusState.base||0)); renderFocus(); } }, 250);
+  renderFocus();
+}
+function pauseFocus(){
+  if(!focusState) return;
+  if(focusState.running){ focusState.base = focusState.elapsed; focusState.running=false; }
+  else { focusState.start = Date.now(); focusState.running=true; }
+  renderFocus();
+}
+function endFocus(finished){
+  if(!focusState) return;
+  const f = findNode(focusState.id);
+  const secs = focusState.elapsed;
+  clearInterval(ticker); ticker=null;
+  if(f){
+    S.sessions.push({ id:uid(), title:f.node.title, est:f.node.est||25, start:Date.now()-secs*1000, end:Date.now(), secs, finished });
+    f.node.spent = (f.node.spent||0) + secs;
+    if(finished){ f.node.done = true; f.node.doneAt = Date.now(); bumpStreak(); confetti(); S.meta.pomos=(S.meta.pomos||0)+1; }
+  }
+  const wasTwoMin = focusState.twoMin;
+  focusState = null;
+  save(); render();
+  if(finished){
+    if(wasTwoMin) toast('2 分钟到了！继续还是停，都算赢 🎉');
+    else toast('完成一步 🎉 这就是进度');
+    if(S.settings.autoNext){
+      const nxt = nextSuggestion();
+      if(nxt) setTimeout(()=>offerNext(nxt), 700);
+    }
+  }
+}
+function bumpStreak(){
+  const t = todayKey();
+  if(S.meta.lastDay !== t){
+    const y = new Date(Date.now()-DAY).toLocaleDateString('sv');
+    S.meta.streak = (S.meta.lastDay===y)? (S.meta.streak||0)+1 : 1;
+    S.meta.lastDay = t;
+    S.meta.best = Math.max(S.meta.best||0, S.meta.streak);
+  }
+}
+function nextSuggestion(){
+  const p = pendingSteps();
+  if(!p.length) return null;
+  const t = p.filter(x=>x.today);
+  const pool = t.length? t : p;
+  return pool.sort((a,b)=>(a.n.est||99)-(b.n.est||99))[0];
+}
+function offerNext(n){
+  document.getElementById('modal').innerHTML = `<div class="overlay"><div class="sheet">
+    <div class="grab"></div><h3>🎉 下一步</h3>
+    <div class="card tight" style="margin-bottom:12px"><b>${esc(n.n.title)}</b>
+      <div class="tiny muted">${esc(n.p.title)} · 约 ${n.n.est||0} 分钟</div></div>
+    <button class="btn pri block" data-act="focus" data-id="${n.n.id}">▶ 接着做这个</button>
+    <button class="btn block" style="margin-top:8px" data-act="take-break">休息 5 分钟</button>
+    <button class="btn ghost block" style="margin-top:8px" data-act="close-modal">今天就到这</button>
+  </div></div>`;
+}
+
+function renderFocus(){
+  const f = focusState? findNode(focusState.id):null;
+  const el = document.getElementById('focus');
+  if(!focusState || !f){ el.innerHTML=''; el.className='hide'; return; }
+  el.className='';
+  const e = focusState.elapsed, tgt = focusState.target;
+  const pct = clamp(e/tgt,0,1);
+  const R=94, C=2*Math.PI*R;
+  const mm = String(Math.floor(e/60)).padStart(2,'0'), ss=String(e%60).padStart(2,'0');
+  const over = e > tgt;
+  const p = f.project;
+  el.innerHTML = `
+  <div class="row between" style="margin-bottom:6px">
+    <div class="tiny muted">${esc(p.title)}</div>
+    <button class="btn xs ghost" data-act="exit-focus">退出 ✕</button>
+  </div>
+  <div style="text-align:center;margin:6px 0 2px">
+    <div class="tiny muted">现在只做这一件</div>
+    <div style="font-size:21px;font-weight:700;line-height:1.35;margin:6px 0">${esc(f.node.title)}</div>
+    <div class="tiny muted">预估 ${f.node.est||25} 分钟${over?' · <b style="color:var(--accent2)">已超时,可以收手了</b>':''}</div>
+  </div>
+  <div class="ring">
+    <svg width="210" height="210">
+      <circle cx="105" cy="105" r="${R}" fill="none" stroke="var(--card2)" stroke-width="12"/>
+      <circle cx="105" cy="105" r="${R}" fill="none" stroke="${over?'var(--accent2)':'var(--accent)'}"
+        stroke-width="12" stroke-linecap="round" stroke-dasharray="${C}"
+        stroke-dashoffset="${C*(1-pct)}" style="transition:stroke-dashoffset .3s"/>
+    </svg>
+    <div class="num">${mm}:${ss}<small>${focusState.running?'进行中':'已暂停'}</small></div>
+  </div>
+  <div class="row" style="margin:6px 0 14px">
+    <button class="btn block ${focusState.running?'':'ok'}" data-act="fpause">${focusState.running?'⏸ 暂停':'▶ 继续'}</button>
+    <button class="btn block ok" data-act="fdone">✓ 完成</button>
+  </div>
+  <div class="row wrap" style="gap:6px;margin-bottom:14px">
+    <button class="btn sm ghost" data-act="fhalf">🔪 太大了,砍一半</button>
+    <button class="btn sm ghost" data-act="fstuck">😵 卡住了</button>
+    <button class="btn sm ghost" data-act="fpark">💭 记个想法</button>
+  </div>
+  <div class="park">
+    <div class="tiny muted" style="margin-bottom:6px">🅿️ 停车区 — 脑子里冒出来的别的事,丢这儿,专注完再处理</div>
+    <div class="row">
+      <input id="park-in" class="grow" placeholder="突然想到…（回车记下）">
+      <button class="btn sm" data-act="park-add">记下</button>
+    </div>
+    ${(focusState.parking||[]).map(t=>`<div class="tiny" style="margin-top:6px">· ${esc(t)}</div>`).join('')}
+  </div>
+  <div class="tiny muted" style="text-align:center;margin-top:16px">
+    做不下去不是意志力问题,是这一步切得还不够小。<br>试试"🔪 砍一半"。
+  </div>`;
+}
+
+/* ============ 弹窗 / 提示 ============ */
+let toastT;
+function toast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'), 2000);
+}
+function closeModal(){ document.getElementById('modal').innerHTML=''; }
+function sheet(html){ document.getElementById('modal').innerHTML = `<div class="overlay"><div class="sheet"><div class="grab"></div>${html}</div></div>`; }
+
+function confetti(){
+  const c=document.getElementById('confetti'), ctx=c.getContext('2d');
+  c.width=innerWidth; c.height=innerHeight;
+  const colors=['#7c9cff','#ffb057','#4ade80','#f472b6','#facc15'];
+  const ps=[...Array(70)].map(()=>({x:Math.random()*c.width,y:-20-Math.random()*c.height*.5,
+    vy:2+Math.random()*3,vx:-1+Math.random()*2,s:5+Math.random()*7,r:Math.random()*360,
+    c:colors[Math.floor(Math.random()*colors.length)]}));
+  let f=0;
+  (function draw(){
+    ctx.clearRect(0,0,c.width,c.height); f++;
+    ps.forEach(p=>{ p.y+=p.vy; p.x+=p.vx; p.r+=6;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r*Math.PI/180);
+      ctx.fillStyle=p.c; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6); ctx.restore(); });
+    if(f<110) requestAnimationFrame(draw); else ctx.clearRect(0,0,c.width,c.height);
+  })();
+}
+
+/* ============ 新建项目 / 任务 ============ */
+function newProjectSheet(prefill=''){
+  const colors=['#7c9cff','#ffb057','#4ade80','#f472b6','#facc15','#60a5fa'];
+  sheet(`<h3>🐘 新建一头大象</h3>
+    <label class="tiny muted">项目名称</label>
+    <input id="p-title" placeholder="例如：Q3 员工培训方案" value="${esc(prefill)}">
+    <label class="tiny muted" style="display:block;margin-top:10px">为什么要做（卡住时回来看这个）</label>
+    <input id="p-why" placeholder="做完了能怎样？">
+    <div class="row" style="margin-top:10px;gap:8px">
+      <div class="grow"><label class="tiny muted">截止日（可选）</label><input id="p-due" type="date"></div>
+    </div>
+    <label class="tiny muted" style="display:block;margin:12px 0 6px">颜色</label>
+    <div class="row" id="p-colors">${colors.map((c,i)=>
+      `<button class="chip ${i===0?'on':''}" data-color="${c}" style="width:34px;height:34px;border-radius:50%;background:${c};padding:0"></button>`).join('')}</div>
+    <button class="btn pri block" style="margin-top:16px" data-act="create-proj">创建并去拆解</button>
+    <button class="btn ghost block" style="margin-top:8px" data-act="close-modal">取消</button>`);
+}
+
+function guideSheet(title){
+  sheet(`<h3>🤔 把"${esc(title)}"想清楚</h3>
+    <div class="tiny muted" style="margin-bottom:12px">不用全答,能答几个答几个。答完我再帮你拆。</div>
+    ${[['做完了是什么样？（越具体越好）','g1'],
+       ['最小的第一步是什么？（2 分钟能做完的那种）','g2'],
+       ['需要什么材料/信息/人？','g3'],
+       ['有没有"先做个 60 分版本"的可能？','g4'],
+       ['什么时候算完成？','g5']].map(([q,id])=>`
+      <label class="tiny muted" style="display:block;margin-top:10px">${q}</label>
+      <input id="${id}" placeholder="随便写…">`).join('')}
+    <button class="btn pri block" style="margin-top:16px" data-act="guide-done" data-title="${esc(title)}">根据这些帮我拆</button>
+    <button class="btn ghost block" style="margin-top:8px" data-act="guide-skip" data-title="${esc(title)}">算了，用通用模板拆</button>`);
+}
+
+function previewSheet(title, steps){
+  sheet(`<h3>🔮 拆好了,你改改</h3>
+    <div class="tiny muted" style="margin-bottom:10px">识别为「${esc(title)}」类型。删掉不需要的,改改时间。</div>
+    <div id="pv">${steps.map((s,i)=>`
+      <div class="card tight row" data-pv="${i}" style="margin-bottom:6px">
+        <input class="grow" value="${esc(s[0])}" data-f="t" style="background:transparent;border:none;padding:4px 0">
+        <input type="number" value="${s[1]}" data-f="e" style="width:64px;text-align:center" min="1" max="120">
+        <button class="btn xs ghost" data-act="pv-del" data-i="${i}">✕</button>
+      </div>`).join('')}</div>
+    <button class="btn sm ghost block" data-act="pv-add">+ 加一步</button>
+    <div class="row" style="margin-top:14px">
+      <button class="btn pri block grow" data-act="pv-ok" data-title="${esc(title)}">放进项目</button>
+      <button class="btn block" data-act="close-modal">取消</button>
+    </div>`);
+}
+
+/* ============ 事件委托 ============ */
+document.addEventListener('click', e=>{
+  const b = e.target.closest('[data-act]'); if(!b) return;
+  const a = b.dataset.act, id = b.dataset.id;
+
+  if(b.classList.contains('chip') && b.dataset.color){
+    document.querySelectorAll('#p-colors .chip').forEach(c=>c.classList.remove('on')); b.classList.add('on'); return;
+  }
+
+  switch(a){
+    case 'dump-add': {
+      const i=document.getElementById('dump'); const v=i.value.trim();
+      if(!v) return; S.inbox.push({id:uid(), text:v, t:Date.now()}); i.value=''; save(); render();
+      break; }
+    case 'dump-del': S.inbox = S.inbox.filter(x=>x.id!==id); save(); render(); break;
+    case 'dump-2proj': {
+      const it = S.inbox.find(x=>x.id===id);
+      S.inbox = S.inbox.filter(x=>x.id!==id); save();
+      newProjectSheet(it? it.text : ''); break; }
+
+    case 'new-proj': newProjectSheet(); break;
+    case 'create-proj': {
+      const t=document.getElementById('p-title').value.trim();
+      if(!t) return toast('给个项目名');
+      const c=document.querySelector('#p-colors .chip.on')?.dataset.color || '#7c9cff';
+      const p={id:uid(),title:t,why:document.getElementById('p-why').value.trim(),
+        due:document.getElementById('p-due').value||null,color:c,nodes:[],created:Date.now()};
+      S.projects.push(p); save(); openProj=p.id; TAB='proj'; closeModal(); render();
+      toast('建好了,现在往里加第一件事'); break; }
+    case 'open-proj': openProj=id; render(); break;
+    case 'back-proj': openProj=null; render(); break;
+    case 'edit-proj': {
+      const p=S.projects.find(x=>x.id===id);
+      sheet(`<h3>编辑项目</h3>
+        <input id="p-title" value="${esc(p.title)}">
+        <input id="p-why" style="margin-top:8px" value="${esc(p.why||'')}" placeholder="为什么做">
+        <input id="p-due" type="date" style="margin-top:8px" value="${p.due||''}">
+        <button class="btn pri block" style="margin-top:14px" data-act="save-proj" data-id="${p.id}">保存</button>
+        <button class="btn warn block" style="margin-top:8px" data-act="del-proj" data-id="${p.id}">删除整个项目</button>
+        <button class="btn ghost block" style="margin-top:8px" data-act="close-modal">取消</button>`); break; }
+    case 'save-proj': {
+      const p=S.projects.find(x=>x.id===id);
+      p.title=document.getElementById('p-title').value.trim()||p.title;
+      p.why=document.getElementById('p-why').value.trim();
+      p.due=document.getElementById('p-due').value||null;
+      save(); closeModal(); render(); break; }
+    case 'del-proj': {
+      if(!confirm('删除整个项目？不可恢复。')) break;
+      S.projects=S.projects.filter(x=>x.id!==id); openProj=null; save(); closeModal(); render(); break; }
+
+    case 'add-task': {
+      const t=document.getElementById('ntitle').value.trim();
+      if(!t) return toast('先写一句要做的事');
+      const mode=document.getElementById('nmode').value;
+      if(mode==='guide') return guideSheet(t);
+      if(mode==='single'){ addNodes(openProj,[mkNode(t, 20)]); document.getElementById('ntitle').value=''; save(); render(); return; }
+      let steps;
+      if(mode==='flow') steps=[['准备：把做这件事要用的东西备齐',8],['做：'+t,25],['收尾：检查一遍并归档',8]];
+      else if(mode==='mvp') steps=[['定义最小版本：'+t+' 最简能做成啥样',10],
+        ['做出最小版本',25],['给它加一点完成度',20],['收尾',10]];
+      else steps=matchTemplate(t).steps.map(s=>[s[0], s[1]]);
+      lastDraft={title:t, steps}; previewSheet(matchTemplate(t).name, steps); break; }
+    case 'guide-done': {
+      const title=b.dataset.title;
+      const g=['g1','g2','g3','g4','g5'].map(k=>document.getElementById(k).value.trim()).filter(Boolean);
+      const steps=[...g.map(x=>['想清楚：'+x, 8]), ...matchTemplate(title).steps.map(s=>[s[0],s[1]])];
+      lastDraft={title, steps}; previewSheet('引导式拆解', steps.slice(0,8)); break; }
+    case 'guide-skip': {
+      const title=b.dataset.title; lastDraft={title, steps:matchTemplate(title).steps.map(s=>[s[0],s[1]])};
+      previewSheet(matchTemplate(title).name, lastDraft.steps); break; }
+
+    case 'pv-del': { b.closest('[data-pv]').remove(); break; }
+    case 'pv-add': {
+      const d=document.createElement('div'); d.className='card tight row'; d.style.marginBottom='6px';
+      d.innerHTML=`<input class="grow" placeholder="这一步做什么" data-f="t" style="background:transparent;border:none;padding:4px 0">
+        <input type="number" value="10" data-f="e" style="width:64px;text-align:center">
+        <button class="btn xs ghost" onclick="this.parentElement.remove()">✕</button>`;
+      document.getElementById('pv').appendChild(d); break; }
+    case 'pv-ok': {
+      const rows=[...document.querySelectorAll('#pv [data-pv]')];
+      const steps=rows.map(r=>[r.querySelector('[data-f=t]').value.trim(),
+        clamp(parseInt(r.querySelector('[data-f=e]').value)||10,1,180)]).filter(s=>s[0]);
+      if(!steps.length) return toast('至少留一步');
+      const parent = mkNode(b.dataset.title||lastDraft?.title||'新任务', steps.reduce((a,s)=>a+s[1],0));
+      parent.children = steps.map(s=>mkNode(s[0], s[1]));
+      addNodes(openProj, [parent]);
+      closeModal(); save(); render(); toast('拆成 '+steps.length+' 步了 ✓'); break; }
+
+    case 'toggle': {
+      const f=findNode(id); if(!f) return;
+      f.node.done=!f.node.done;
+      if(f.node.done){ f.node.doneAt=Date.now(); bumpStreak(); confetti(); }
+      save(); render(); break; }
+    case 'del': {
+      const f=findNode(id); if(!f) return;
+      const rm=(ns)=>{ const i=ns.findIndex(x=>x.id===id); if(i>-1){ ns.splice(i,1); return true; }
+        return ns.some(n=>n.children&&rm(n.children)); };
+      S.projects.forEach(p=>rm(p.nodes)); save(); render(); break; }
+    case 'split': {
+      const f=findNode(id); if(!f) return;
+      if(!f.node.children?.length){
+        f.node.children = subSplit(f.node).map(s=>mkNode(s[0],s[1]));
+        f.node.open=true;
+      } else {
+        const half=Math.max(5,Math.round((f.node.est||20)/2));
+        f.node.children.push(mkNode('（后半部分）'+f.node.title, half));
+      }
+      save(); render(); toast('切好了'); break; }
+    case 'today': { const f=findNode(id); if(f){ f.node.today=true; save(); render(); toast('加入今天'); } break; }
+    case 'untoday': { const f=findNode(id); if(f){ f.node.today=false; save(); render(); } break; }
+
+    case 'focus': closeModal(); startFocus(id); break;
+    case 'two-min': {
+      closeModal();
+      const f=findNode(id); if(!f) return;
+      if(focusState) endFocus(false);
+      const n=mkNode(twoMinVersion(f.node.title), 2);
+      const arr = f.parent? f.parent.children : f.project.nodes;
+      arr.splice(arr.indexOf(f.node), 0, n);
+      save(); render(); startFocus(n.id, {twoMin:true}); break; }
+    case 'focus-next': case 'focus-proj': case 'quick-focus': case 'pick-next': {
+      let pool = pendingSteps();
+      if(a==='focus-proj'||a==='quick-focus'){ const p=S.projects.find(x=>x.id===id); pool = pool.filter(x=>x.p.id===p.id); }
+      if(!pool.length) return toast('没有可做的了');
+      const t=pool.filter(x=>x.today); pool=t.length?t:pool;
+      const pick = a==='pick-next' ? pool[Math.floor(Math.random()*pool.length)] : pool.sort((x,y)=>(x.n.est||99)-(y.n.est||99))[0];
+      startFocus(pick.n.id); break; }
+
+    case 'fpause': pauseFocus(); break;
+    case 'fdone': endFocus(true); break;
+    case 'exit-focus': endFocus(false); break;
+    case 'fhalf': {
+      closeModal();
+      if(!focusState) return;
+      const f=findNode(focusState.id); if(!f) return;
+      const half=Math.max(4,Math.round((f.node.est||20)/2));
+      f.node.title='（前半）'+f.node.title; f.node.est=half;
+      const arr = f.parent? f.parent.children : f.project.nodes;
+      arr.splice(arr.indexOf(f.node)+1, 0, mkNode('（后半）'+f.node.title.replace('（前半）',''), half));
+      focusState.target=half*60; save(); renderFocus(); toast('砍成两半了,先做前半'); break; }
+    case 'fstuck': stuckSheet(); break;
+    case 'fpark': closeModal(); setTimeout(()=>document.getElementById('park-in')?.focus(),60); break;
+    case 'park-add': {
+      const i=document.getElementById('park-in'); const v=i.value.trim();
+      if(!v) return; focusState.parking.push(v); S.inbox.push({id:uid(),text:'[专注时想到] '+v,t:Date.now()});
+      i.value=''; save(); renderFocus(); toast('记下了,继续'); break; }
+    case 'stuck-shuffle': {
+      closeModal();
+      endFocus(false);
+      const pool=pendingSteps(); if(!pool.length) return toast('没了');
+      startFocus(pool[Math.floor(Math.random()*pool.length)].n.id); break; }
+    case 'stuck-easiest': {
+      closeModal();
+      if(!focusState) return;
+      endFocus(false);
+      const pool=pendingSteps();
+      if(!pool.length) return toast('没有别的了');
+      pool.sort((x,y)=>(x.n.est||99)-(y.n.est||99));
+      startFocus(pool[0].n.id); break; }
+
+    case 'take-break': {
+      closeModal();
+      const mins=S.settings.brk;
+      focusState={id:null,start:Date.now(),elapsed:0,running:true,target:mins*60,rest:true,parking:[]};
+      if(ticker) clearInterval(ticker);
+      ticker=setInterval(()=>{ if(focusState?.running){ focusState.elapsed=Math.round((Date.now()-focusState.start)/1000+(focusState.base||0)); renderFocus(); } },250);
+      renderFocus(); break; }
+
+    case 'close-modal': closeModal(); break;
+    case 'btn-theme': break;
+  }
+});
+
+// 休息态渲染拦截
+const _renderFocus = renderFocus;
+renderFocus = function(){
+  if(focusState && focusState.rest){
+    const el=document.getElementById('focus'); el.className='';
+    const e=focusState.elapsed, tgt=focusState.target;
+    const mm=String(Math.floor(Math.max(0,tgt-e)/60)).padStart(2,'0'), ss=String(Math.max(0,tgt-e)%60).padStart(2,'0');
+    el.innerHTML=`<div class="row between"><div class="tiny muted">休息一下</div>
+      <button class="btn xs ghost" data-act="exit-focus">结束 ✕</button></div>
+      <div style="text-align:center;margin-top:32px">
+        <div style="font-size:56px">☕️</div>
+        <div style="font-size:40px;font-weight:700;margin:10px 0">${mm}:${ss}</div>
+        <div class="tiny muted">站起来、喝水、看远处。别刷手机——那不叫休息。</div>
+        <button class="btn pri block" style="margin-top:24px" data-act="fpause">${focusState.running?'暂停':'继续'}</button>
+        <button class="btn ghost block" style="margin-top:8px" data-act="exit-focus">结束休息</button>
+      </div>`;
+    return;
+  }
+  _renderFocus();
+};
+
+function stuckSheet(){
+  sheet(`<h3>😵 卡住了,很正常</h3>
+    <div class="tiny muted" style="margin-bottom:14px">卡住不是懒。选一个试试:</div>
+    <button class="btn block" style="margin-bottom:8px;text-align:left" data-act="fhalf">🔪 这一步还是太大 — 砍一半</button>
+    <button class="btn block" style="margin-bottom:8px;text-align:left" data-act="stuck-easiest">🍼 先做整个项目里最简单的那步</button>
+    <button class="btn block" style="margin-bottom:8px;text-align:left" data-act="stuck-shuffle">🎲 换一件别的做</button>
+    <button class="btn block" style="margin-bottom:8px;text-align:left" data-act="two-min" data-id="${focusState?.id}">⚡ 只要 2 分钟,做完可以停</button>
+    <button class="btn block" style="margin-bottom:8px;text-align:left" data-act="fpark">💭 先写下卡在哪,再决定</button>
+    <div class="card tight tiny muted" style="margin-top:14px">
+      生理层面:起来走 2 分钟、喝口水、或者大声念一遍你要做什么。<br>
+      这些比"再努力一点"管用。
+    </div>
+    <button class="btn ghost block" style="margin-top:12px" data-act="close-modal">关闭</button>`);
+}
+
+/* ============ 工具 ============ */
+function mkNode(title, est){
+  return {id:uid(), title, est:est||10, done:false, spent:0, children:[], today:false, created:Date.now()};
+}
+function addNodes(pid, nodes){
+  const p=S.projects.find(x=>x.id===pid); if(!p) return;
+  p.nodes.push(...nodes);
+}
+let lastDraft=null;
+
+/* ============ 设置 ============ */
+document.getElementById('btn-set').onclick = ()=>{
+  sheet(`<h3>⚙️ 设置</h3>
+    <label class="tiny muted">默认专注时长（分钟）</label>
+    <input id="s-focus" type="number" value="${S.settings.focus}">
+    <label class="tiny muted" style="display:block;margin-top:10px">短休息（分钟）</label>
+    <input id="s-brk" type="number" value="${S.settings.brk}">
+    <div class="row" style="margin-top:12px">
+      <button class="btn block grow" data-act="export">导出备份</button>
+      <button class="btn block grow" data-act="import">导入</button>
+    </div>
+    <button class="btn warn block" style="margin-top:10px" data-act="wipe">清空所有数据</button>
+    <div class="tiny muted" style="margin-top:16px;line-height:1.7">
+      <b>快捷键</b><br>N 新建项目 · F 专注下一件 · Esc 关闭弹层
+    </div>
+    <button class="btn ghost block" style="margin-top:14px" data-act="close-modal">关闭</button>`);
+};
+document.getElementById('btn-theme').onclick = ()=>{
+  S.settings.theme = S.settings.theme==='dark'?'light':'dark'; save(); render();
+};
+document.addEventListener('click', e=>{
+  const b=e.target.closest('[data-act]'); if(!b) return;
+  if(b.dataset.act==='export'){
+    const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download='adhd-planner-'+todayKey()+'.json'; a.click(); toast('已导出');
+  }
+  if(b.dataset.act==='import'){
+    const i=document.createElement('input'); i.type='file'; i.accept='.json';
+    i.onchange=()=>{ const r=new FileReader(); r.onload=()=>{ try{
+      S=JSON.parse(r.result); save(); closeModal(); render(); toast('导入成功'); }catch(e){toast('文件格式不对');} };
+      r.readAsText(i.files[0]); };
+    i.click();
+  }
+  if(b.dataset.act==='wipe'){
+    if(confirm('清空全部数据？建议先导出备份。')){ S=DEF(); save(); closeModal(); render(); }
+  }
+});
+
+/* ============ Tab / 键盘 ============ */
+document.getElementById('tabbar').onclick = e=>{
+  const b=e.target.closest('[data-tab]'); if(!b) return;
+  const t=b.dataset.tab;
+  if(t==='focus'){
+    if(focusState){ renderFocus(); return; }
+    const n=nextSuggestion();
+    if(n) startFocus(n.n.id); else toast('没有待办,先去建个项目');
+    return;
+  }
+  TAB=t; if(TAB!=='proj') openProj=null;
+  render(); window.scrollTo(0,0);
+};
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){ closeModal(); return; }
+  const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+  if(typing) return;
+  if(e.key==='n'||e.key==='N'){ newProjectSheet(); }
+  if(e.key==='f'||e.key==='F'){ const n=nextSuggestion(); if(n) startFocus(n.n.id); else toast('没有待办'); }
+});
+document.getElementById('view').addEventListener('keydown', e=>{
+  if(e.target.id==='dump' && e.key==='Enter'){ document.querySelector('[data-act=dump-add]').click(); }
+  if(e.target.id==='ntitle' && e.key==='Enter'){ document.querySelector('[data-act=add-task]').click(); }
+  if(e.target.id==='park-in' && e.key==='Enter'){ document.querySelector('[data-act=park-add]').click(); }
+});
+
+/* ============ 启动 ============ */
+if(!S.projects.length && !S.inbox.length){
+  // 首次使用的示例，帮用户理解"拆到多小算小"
+  const demo = {id:uid(), title:'示例：写一份季度总结', why:'示范"拆到多小"是什么手感',
+    due:null, color:'#7c9cff', created:Date.now(), nodes:[]};
+  const t1 = mkNode('写季度总结', 95);
+  t1.children = [['列出要写哪几个部分（只要标题）',8],['把数据丢进一个文件夹',15],
+    ['写第一版草稿（允许写得烂）',25],['补数据和例子',20],['通读改别扭的地方',15],['排版命名归档',8]]
+    .map(s=>mkNode(s[0], s[1]));
+  demo.nodes.push(t1);
+  S.projects.push(demo); save();
+}
+render();
+</script>
+</body>
+</html>

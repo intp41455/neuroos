@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0c10">
+<title>NeuroOS · ADHD/INTP 认知操作系统</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="topbar"><div class="wrap">
+  <div class="row between">
+    <h1>🧠 NeuroOS</h1>
+    <div class="row">
+      <span id="phase-badge" class="pill"></span>
+      <button class="btn xs ghost" id="btn-theme" data-act="btn-theme">🌓</button>
+      <button class="btn xs ghost" id="btn-set" data-act="btn-set">⚙️</button>
+    </div>
+  </div>
+</div></div>
+
+<main id="app">
+  <section class="view on" id="view-dash"></section>
+  <section class="view" id="view-rhythm"></section>
+  <section class="view" id="view-quests"></section>
+  <section class="view" id="view-parking"></section>
+  <section class="view" id="view-distill"></section>
+  <section class="view" id="view-insights"></section>
+</main>
+
+<nav class="tabbar" id="tabbar">
+  <button data-tab="dash" class="on"><span class="ic">🏠</span>首页</button>
+  <button data-tab="rhythm"><span class="ic">🌙</span>节律</button>
+  <button data-tab="quests"><span class="ic">🕸</span>Quest</button>
+  <button data-tab="parking"><span class="ic">🅿️</span>停车</button>
+  <button data-tab="distill"><span class="ic">🧪</span>蒸馏</button>
+  <button data-tab="insights"><span class="ic">📊</span>洞察</button>
+</nav>
+
+<div id="modal"></div>
+<div id="toast"></div>
+<canvas id="confetti"></canvas>
+
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+<script src="app.js"></script>
+</body>
+</html>

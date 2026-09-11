@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0c10">
+<title>NeuroOS · ADHD/INTP 认知操作系统</title>
+
+<style>
+:root{
+  --bg:#0a0c10;
+  --bg2:#11141a;
+  --card:#161a22;
+  --card2:#1e232d;
+  --card3:#252b38;
+  --line:#2d3645;
+  --text:#e8ecf3;
+  --muted:#8b98ab;
+  --dim:#5c6a7d;
+  
+  --net:#a78bfa;
+  --net2:#7c3aed;
+  --tree:#f59e0b;
+  --tree2:#d97706;
+  --line:#34d399;
+  --line2:#059669;
+  --accent:#60a5fa;
+  --accent2:#f472b6;
+  --ok:#4ade80;
+  --warn:#f87171;
+  --info:#38bdf8;
+  
+  --r:14px;
+  --shadow:0 8px 28px rgba(0,0,0,.45);
+}
+
+html[data-theme="light"]{
+  --bg:#f6f7fa;
+  --bg2:#eef0f5;
+  --card:#fff;
+  --card2:#f3f5fa;
+  --card3:#e8ecf3;
+  --line:#e0e5ee;
+  --text:#151921;
+  --muted:#6b7689;
+  --dim:#9aa5b5;
+  --shadow:0 6px 20px rgba(20,30,50,.10);
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%;overscroll-behavior:none}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;font-size:15px;line-height:1.55}
+button{font-family:inherit;font-size:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit;font-size:inherit;color:var(--text);background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:70px}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+
+#app{max-width:980px;margin:0 auto;padding:0 14px 110px;min-height:100%}
+.hide{display:none!important}
+.row{display:flex;gap:8px;align-items:center}
+.row.wrap{flex-wrap:wrap}
+.row.start{align-items:flex-start}
+.between{justify-content:space-between}
+.grow{flex:1;min-width:0}
+.ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.muted{color:var(--muted)}
+.dim{color:var(--dim)}
+.tiny{font-size:12px}
+.xs{font-size:11px}
+.center{text-align:center}
+.pill{display:inline-block;padding:3px 10px;border-radius:99px;background:var(--card2);border:1px solid var(--line);font-size:11px;color:var(--muted)}
+
+.btn{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:9px 14px;font-weight:600;transition:transform .08s,filter .15s,background .15s;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn:active{transform:scale(.96)}
+.btn.pri{background:var(--accent);color:#0c1220;border-color:transparent}
+.btn.ok{background:var(--ok);color:#08240f;border-color:transparent}
+.btn.warn{background:transparent;border-color:var(--warn);color:var(--warn)}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.sm{padding:6px 10px;font-size:13px;border-radius:9px}
+.btn.xs{padding:4px 8px;font-size:12px;border-radius:8px}
+.btn.block{width:100%}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+.phase-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
+.phase-net{background:var(--net)}
+.phase-tree{background:var(--tree)}
+.phase-line{background:var(--line)}
+.phase-off{background:var(--dim)}
+
+.topbar{position:sticky;top:0;z-index:40;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0 8px;margin-bottom:8px}
+.topbar h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.5px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.card.tight{padding:10px 12px}
+.card.net{border-left:4px solid var(--net)}
+.card.tree{border-left:4px solid var(--tree)}
+.card.line{border-left:4px solid var(--line)}
+.card.warn{border-left:4px solid var(--warn)}
+.card.info{border-left:4px solid var(--info)}
+
+h2.sec{font-size:13px;color:var(--muted);margin:20px 0 8px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+h3.sec{font-size:16px;margin:0 0 10px}
+
+.badge{font-size:11px;padding:2px 7px;border-radius:99px;background:var(--card2);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.net{background:rgba(167,139,250,.12);color:var(--net);border-color:transparent}
+.badge.tree{background:rgba(245,158,11,.12);color:var(--tree);border-color:transparent}
+.badge.line{background:rgba(52,211,153,.12);color:var(--line);border-color:transparent}
+.badge.ok{background:rgba(74,222,128,.12);color:var(--ok);border-color:transparent}
+.badge.warn{background:rgba(248,113,113,.12);color:var(--warn);border-color:transparent}
+
+.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--bg2);border-top:1px solid var(--line);display:flex;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+.tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 2px;border-radius:11px;color:var(--muted);font-size:11px}
+.tabbar button.on{color:var(--accent);background:var(--card)}
+.tabbar .ic{font-size:19px;line-height:1}
+
+.view{display:none}
+.view.on{display:block}
+
+.rhythm-bar{display:flex;height:34px;border-radius:8px;overflow:hidden;background:var(--card2);border:1px solid var(--line);margin:10px 0}
+.rhythm-bar div{display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--dim);position:relative}
+.rhythm-bar .calm{background:#1e293b;color:#94a3b8}
+.rhythm-bar .deep{background:#0f172a;color:#475569}
+.rhythm-bar .peak{background:rgba(245,158,11,.15);color:var(--tree)}
+.rhythm-bar .creative{background:rgba(167,139,250,.15);color:var(--net)}
+.rhythm-bar .now{box-shadow:inset 0 0 0 2px var(--accent)}
+
+.kv{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.kv:last-child{border:none}
+
+.bar{height:7px;background:var(--bg2);border-radius:99px;overflow:hidden}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--ok));border-radius:99px;transition:width .4s}
+
+/* Net canvas */
+.net-canvas{position:relative;width:100%;height:420px;background:var(--bg2);border:1px dashed var(--line);border-radius:var(--r);overflow:hidden;touch-action:none}
+.net-node{position:absolute;padding:8px 12px;border-radius:10px;background:var(--card);border:1px solid var(--line);color:var(--text);font-size:13px;cursor:grab;user-select:none;white-space:nowrap;z-index:2;max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.net-node:active{cursor:grabbing;z-index:10}
+.net-node.selected{box-shadow:0 0 0 2px var(--net);border-color:var(--net)}
+.net-edge{position:absolute;height:2px;background:var(--dim);transform-origin:left center;z-index:1;pointer-events:none;opacity:.5}
+.net-canvas .hint{position:absolute;bottom:8px;left:8px;color:var(--dim);font-size:11px;background:var(--bg);padding:4px 8px;border-radius:6px}
+
+/* Tree */
+.tree-root{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
+.tree-root h4{margin:0 0 8px;font-size:13px;color:var(--tree);font-weight:600}
+.tree-item{padding:7px 8px;border-radius:8px;background:var(--card3);margin-bottom:5px;font-size:13px;display:flex;gap:8px;align-items:center}
+.tree-item .handle{color:var(--dim);cursor:grab}
+
+/* Line */
+.line-step{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:10px;background:var(--card2);border:1px solid transparent;margin-bottom:6px}
+.line-step:hover{border-color:var(--line)}
+.line-step.done{opacity:.5}
+.line-step .chk{width:20px;height:20px;min-width:20px;border-radius:6px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent}
+.line-step .chk.on{background:var(--ok);border-color:var(--ok);color:#08240f}
+
+/* Overlay / Sheet */
+.overlay{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.65);display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.sheet{background:var(--bg);width:100%;max-width:620px;max-height:90vh;overflow-y:auto;border-radius:22px 22px 0 0;padding:18px 16px calc(24px + env(safe-area-inset-bottom));box-shadow:var(--shadow);animation:up .22s ease}
+.grab{width:38px;height:4px;background:var(--line);border-radius:9px;margin:0 auto 14px}
+@keyframes up{from{transform:translateY(24px);opacity:.5}to{transform:none;opacity:1}}
+
+/* Focus */
+.focus-screen{position:fixed;inset:0;z-index:80;background:var(--bg);display:flex;flex-direction:column;padding:22px 18px calc(18px + env(safe-area-inset-bottom));overflow-y:auto}
+.ring-wrap{width:200px;height:200px;margin:10px auto;position:relative}
+.ring-wrap svg{transform:rotate(-90deg)}
+.ring-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:34px;font-weight:700;font-variant-numeric:tabular-nums}
+.ring-num small{font-size:12px;font-weight:500;color:var(--muted)}
+
+#toast{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:99;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 18px;box-shadow:var(--shadow);font-weight:600;opacity:0;pointer-events:none;transition:.25s}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(-8px)}
+
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:95}
+
+.empty{text-align:center;padding:40px 18px;color:var(--muted)}
+.empty .big{font-size:44px;display:block;margin-bottom:10px}
+
+input[type="time"],input[type="number"]{font-variant-numeric:tabular-nums}
+
+.probe-box{border:1px dashed var(--line);border-radius:10px;padding:10px;background:var(--bg2);margin-top:8px}
+
+@media(min-width:760px){
+  .tabbar{left:50%;transform:translateX(-50%);max-width:600px;border-radius:20px 20px 0 0;border:1px solid var(--line);border-bottom:none}
+  #app{padding-bottom:90px}
+}
+
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="wrap">
+  <div class="row between">
+    <h1>🧠 NeuroOS</h1>
+    <div class="row">
+      <span id="phase-badge" class="pill"></span>
+      <button class="btn xs ghost" id="btn-theme" data-act="btn-theme">🌓</button>
+      <button class="btn xs ghost" id="btn-set" data-act="btn-set">⚙️</button>
+    </div>
+  </div>
+</div></div>
+
+<main id="app">
+  <section class="view on" id="view-dash"></section>
+  <section class="view" id="view-rhythm"></section>
+  <section class="view" id="view-quests"></section>
+  <section class="view" id="view-parking"></section>
+  <section class="view" id="view-distill"></section>
+  <section class="view" id="view-insights"></section>
+</main>
+
+<nav class="tabbar" id="tabbar">
+  <button data-tab="dash" class="on"><span class="ic">🏠</span>首页</button>
+  <button data-tab="rhythm"><span class="ic">🌙</span>节律</button>
+  <button data-tab="quests"><span class="ic">🕸</span>Quest</button>
+  <button data-tab="parking"><span class="ic">🅿️</span>停车</button>
+  <button data-tab="distill"><span class="ic">🧪</span>蒸馏</button>
+  <button data-tab="insights"><span class="ic">📊</span>洞察</button>
+</nav>
+
+<div id="modal"></div>
+<div id="toast"></div>
+<canvas id="confetti"></canvas>
+
+
+<script>
+/* ===== NeuroOS / ADHD-INTP Cognitive OS ===== */
+const KEY = 'neuroos-v1';
+const uid = () => Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4);
+const DAY = 864e5;
+const todayKey = () => new Date().toLocaleDateString('sv');
+const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
+const fmtTime = d => String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+const parseMin = t => { const [h,m]=t.split(':'); return parseInt(h)*60+parseInt(m); };
+const minToTime = m => String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+
+const DEF = () => ({
+  profile:{name:'', types:['ADHD','INTP','HSP','COMT-Met'], peak:'night'},
+  rhythm:{
+    wakeTarget:'08:30', onlineTarget:'12:00', sleepNatural:'01:30',
+    sleepCutoff:'00:30', sleepHours:7.5, useCutoff:true
+  },
+  quests:[],
+  parking:{insights:[], questions:[], hypotheses:[], friction:[], gold:[]},
+  inbox:[],
+  dailyLog:[],
+  sessions:[],
+  handoff:{ morning:'', evening:'', date:'' },
+  settings:{theme:'dark', focus:25, brk:5, autoNext:true, morningBlock:true},
+  meta:{ created:Date.now(), streak:0, lastDay:null, best:0, pomos:0 }
+});
+
+let S = load();
+function load(){
+  try{
+    const r = JSON.parse(localStorage.getItem(KEY));
+    if(r && r.profile) return mergeDeep(DEF(), r);
+  }catch(e){}
+  return DEF();
+}
+function mergeDeep(a,b){
+  const out = {...a};
+  for(const k in b){ if(b[k]!==undefined) out[k] = (typeof b[k]==='object' && !Array.isArray(b[k]) && b[k]!==null) ? mergeDeep(a[k]||{}, b[k]) : b[k]; }
+  return out;
+}
+let saveT;
+function save(){ clearTimeout(saveT); saveT = setTimeout(()=>localStorage.setItem(KEY, JSON.stringify(S)), 120); }
+
+/* ===== 节律引擎 ===== */
+function getPhase(now=new Date()){
+  const m = now.getHours()*60 + now.getMinutes();
+  const {wakeTarget, onlineTarget, sleepCutoff, sleepNatural} = S.rhythm;
+  const wake = parseMin(wakeTarget);
+  const online = parseMin(onlineTarget);
+  const cutoff = parseMin(sleepCutoff);
+  const natural = parseMin(sleepNatural);
+  
+  // 深夜创作峰：sleepCutoff 前 2h 到 sleepCutoff
+  const creativeStart = cutoff - 120;
+  // 上午校准期：wake 到 online
+  if(m >= wake && m < online) return {id:'calm', name:'离线校准期', color:'var(--dim)', icon:'🌫', desc:'只做被动输入+机械性杂务,不做输出/决策'};
+  // 下午/晚上深度期：online 到 creativeStart
+  if(m >= online && m < creativeStart) return {id:'deep', name:'深度执行期', color:'var(--line)', icon:'🚀', desc:'啃硬骨头,走线性步骤'};
+  // 深夜创作峰
+  if(m >= creativeStart && m < cutoff) return {id:'creative', name:'创意风暴期', color:'var(--net)', icon:'🌟', desc:'网状发散、构思、连接,允许胡思乱想'};
+  // 断电前缓冲
+  if(m >= cutoff && m < natural) return {id:'wind', name:'断电缓冲期', color:'var(--tree)', icon:'🌙', desc:'做 3-2-1 交接仪式,准备合电脑'};
+  // 睡眠时间
+  return {id:'sleep', name:'睡眠恢复期', color:'var(--warn)', icon:'💤', desc:'睡眠中,若醒着请别碰屏幕'};
+}
+function rhythmBlocks(){
+  const {wakeTarget, onlineTarget, sleepCutoff, sleepHours} = S.rhythm;
+  const wake = parseMin(wakeTarget);
+  const online = parseMin(onlineTarget);
+  const cutoff = parseMin(sleepCutoff);
+  const sleepStart = cutoff;
+  const sleepEnd = (sleepStart + sleepHours*60) % 1440;
+  const creativeStart = Math.max(online, cutoff-120);
+  const total = 1440;
+  return [
+    {id:'sleep', start:sleepStart, end:Math.min(1440, sleepStart+sleepHours*60), label:'睡眠'},
+    {id:'calm', start:wake, end:online, label:'校准'},
+    {id:'deep', start:online, end:creativeStart, label:'深度'},
+    {id:'creative', start:creativeStart, end:cutoff, label:'创意'},
+    {id:'wind', start:cutoff, end:cutoff+60, label:'断电'}
+  ].filter(b=>b.end>b.start).map(b=>({...b, pct:(b.end-b.start)/total*100}));
+}
+function nextPhaseTransition(){
+  const now = new Date();
+  const m = now.getHours()*60+now.getMinutes();
+  const blocks = rhythmBlocks();
+  for(const b of blocks){ if(m < b.end) return {phase:b, min:b.end-m}; }
+  return {phase:blocks[0], min: blocks[0].end + (1440-m)};
+}
+
+/* ===== Quest 数据操作 ===== */
+function newQuest(title, type='project'){
+  return {
+    id:uid(), title, type,
+    status:'net',
+    created:Date.now(), updated:Date.now(),
+    net:{nodes:[], edges:[], nextX:80, nextY:120},
+    tree:{drawers:[
+      {id:'problem', name:'问题/痛点', color:'#f87171', items:[]},
+      {id:'hypothesis', name:'假设/洞察', color:'#f59e0b', items:[]},
+      {id:'solution', name:'方案/资源', color:'#60a5fa', items:[]},
+      {id:'conclusion', name:'结论/输出', color:'#a78bfa', items:[]},
+      {id:'action', name:'行动/下一步', color:'#34d399', items:[]}
+    ]},
+    line:[],
+    probe:{hypothesis:'', success:'', stopLoss:'', days:7, active:false},
+    distill:{scout:'', restructure:'', layers:[], verify:''},
+    goodEnough:{mode:'100', sixty:'', hundred:''},
+    context:{blocked:'', lastNote:'', lastAt:0},
+    today:false, done:false
+  };
+}
+function findQuest(id){ return S.quests.find(q=>q.id===id); }
+function addQuest(title, type='project'){ const q=newQuest(title,type); S.quests.push(q); return q; }
+function deleteQuest(id){ S.quests = S.quests.filter(q=>q.id!==id); }
+
+/* ===== 视图路由 ===== */
+let TAB = 'dash';
+let openQuest = null;
+let selectedNetNodes = [];
+let focusState = null;
+let ticker = null;
+
+function renderAll(){
+  document.documentElement.dataset.theme = S.settings.theme;
+  document.getElementById('phase-badge').innerHTML = phaseBadge();
+  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on', b.dataset.tab===TAB));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on', v.id===`view-${TAB}`));
+  const viewFn = {dash:vDash, rhythm:vRhythm, quests:vQuests, parking:vParking, distill:vDistill, insights:vInsights}[TAB];
+  if(viewFn){ console.log('call viewFn', TAB); viewFn(); }
+  if(focusState) renderFocus();
+}
+function phaseBadge(){
+  const p = getPhase();
+  return `<span class="phase-dot" style="background:${p.color}"></span>${p.icon} ${p.name}`;
+}
+
+/* ===== Toast / Modal ===== */
+let toastT;
+function toast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'), 2200);
+}
+function closeModal(){ document.getElementById('modal').innerHTML=''; }
+function sheet(html){ document.getElementById('modal').innerHTML = `<div class="overlay"><div class="sheet"><div class="grab"></div>${html}</div></div>`; }
+
+/* ===== 首页 ===== */
+function vDash(){
+  const p = getPhase();
+  const tr = nextPhaseTransition();
+  const pending = lineItems().filter(x=>!x.q.done);
+  const todayQs = pending.filter(x=>x.n.today);
+  const next = todayQs.length ? todayQs[0] : pending.sort((a,b)=>a.n.est-b.n.est)[0];
+  const handoffDate = S.handoff.date;
+  const hasMorning = handoffDate===todayKey() && S.handoff.morning;
+  const hasEvening = handoffDate===todayKey() && S.handoff.evening;
+  
+  const v = document.getElementById('view-dash');
+  v.innerHTML = `
+  <div class="card ${p.id==='calm'?'info':p.id==='deep'?'line':p.id==='creative'?'net':p.id==='wind'?'tree':''}">
+    <div class="row between">
+      <div>
+        <div class="tiny muted">当前阶段 · 距离下一阶段还有 ${Math.floor(tr.min/60)}h ${tr.min%60}m</div>
+        <div style="font-size:20px;font-weight:700;margin-top:4px">${p.icon} ${p.name}</div>
+      </div>
+      <div class="pill">${fmtTime(new Date())}</div>
+    </div>
+    <div class="tiny muted" style="margin-top:8px">${p.desc}</div>
+    <div class="rhythm-bar">${rhythmBlocks().map(b=>`<div class="${b.id}" style="width:${b.pct}%">${b.label}</div>`).join('')}</div>
+  </div>
+
+  ${p.id==='calm' && S.settings.morningBlock ? morningCard() : ''}
+  ${p.id==='wind' ? eveningCard() : ''}
+
+  <h2 class="sec">${hasMorning ? '今早交接条' : '今早还没有交接'}</h2>
+  ${hasMorning ? `<div class="card warn"><div class="tiny muted">凌晨写下的唯一指令</div><div style="font-size:16px;font-weight:600;margin:6px 0">${esc(S.handoff.morning)}</div></div>`
+    : `<div class="card tight tiny muted">如果昨晚做了 3-2-1 交接,这里会显示"明早第一步"。现在可以去节律页做。</div>`}
+
+  <h2 class="sec">下一步行动</h2>
+  ${next ? `
+    <div class="card line">
+      <div class="tiny muted">${esc(next.q.title)} · ${next.n.est||0} 分钟</div>
+      <div style="font-size:18px;font-weight:700;margin:6px 0">${esc(next.n.title)}</div>
+      <div class="row" style="gap:6px">
+        <button class="btn pri" data-act="focus" data-id="${next.n.id}">▶ 专注</button>
+        <button class="btn" data-act="two-min" data-id="${next.n.id}">⚡ 2分钟版</button>
+      </div>
+    </div>`
+    : `<div class="empty"><span class="big">🌌</span>没有可执行的下一步,去 Quest 页新建一个。</div>`}
+
+  <h2 class="sec">快速入口</h2>
+  <div class="row wrap" style="gap:8px">
+    <button class="btn" data-act="quick-quest">➕ 新建 Quest</button>
+    <button class="btn" data-act="quick-park">🅿️ 丢个想法</button>
+    <button class="btn" data-act="quick-distill">🧪 蒸馏信息</button>
+    <button class="btn" data-act="tab-rhythm">🌙 看节律</button>
+  </div>
+
+  <h2 class="sec">今日状态</h2>
+  <div class="card">
+    <div class="kv"><span class="muted">已连续活跃</span><b>${S.meta.streak||0} 天</b></div>
+    <div class="kv"><span class="muted">今日完成步骤</span><b>${S.sessions.filter(s=>s.finished && new Date(s.end).toLocaleDateString('sv')===todayKey()).length}</b></div>
+    <div class="kv"><span class="muted">停车区想法</span><b>${Object.values(S.parking).flat().length}</b></div>
+    <div class="kv"><span class="muted">活跃 Quest</span><b>${S.quests.filter(q=>!q.done).length}</b></div>
+  </div>`;
+}
+function morningCard(){
+  return `<div class="card info">
+    <b>🌫 上午是离线校准期,不是你的错</b>
+    <div class="tiny muted" style="margin:6px 0">只做被动输入或机械性杂务。推荐:</div>
+    <div class="row wrap" style="gap:6px">
+      <button class="btn xs" data-act="morning-task" data-type="input">🎧 听播客/资讯</button>
+      <button class="btn xs" data-act="morning-task" data-type="tidy">🧹 整理桌面/文件</button>
+      <button class="btn xs" data-act="morning-task" data-type="reply">👌 回"收到/好的"</button>
+      <button class="btn xs" data-act="morning-task" data-type="coffee">☕ 做咖啡+晒太阳</button>
+    </div>
+  </div>`;
+}
+function eveningCard(){
+  return `<div class="card tree">
+    <b>🌙 该做 3-2-1 交接仪式了</b>
+    <div class="tiny muted" style="margin:6px 0">合上电脑前把明天"加载期"要用的东西写出去。</div>
+    <button class="btn pri" data-act="open-handoff">开始交接</button>
+  </div>`;
+}
+
+/* ===== 节律页 ===== */
+function vRhythm(){
+  const {wakeTarget, onlineTarget, sleepCutoff, sleepNatural, sleepHours, useCutoff} = S.rhythm;
+  const nowM = new Date().getHours()*60+new Date().getMinutes();
+  const cutoffM = parseMin(sleepCutoff);
+  const naturalM = parseMin(sleepNatural);
+  const late = nowM > naturalM;
+  
+  const v = document.getElementById('view-rhythm');
+  v.innerHTML = `
+  <div class="card ${late?'warn':'info'}">
+    <div class="row between">
+      <div>
+        <div class="tiny muted">硬性断电时间</div>
+        <div style="font-size:26px;font-weight:700">${sleepCutoff}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="tiny muted">自然入睡</div>
+        <div style="font-size:18px;font-weight:600">${sleepNatural}</div>
+      </div>
+    </div>
+    ${late?`<div class="tiny warn" style="margin-top:8px">⚠️ 已经超过自然入睡时间,腺苷债正在累积。</div>`:''}
+  </div>
+
+  <h2 class="sec">节律配置</h2>
+  <div class="card">
+    <div class="row wrap" style="gap:10px">
+      <div style="flex:1;min-width:120px"><label class="tiny muted">目标起床</label><input type="time" id="r-wake" value="${wakeTarget}"></div>
+      <div style="flex:1;min-width:120px"><label class="tiny muted">能上线工作</label><input type="time" id="r-online" value="${onlineTarget}"></div>
+      <div style="flex:1;min-width:120px"><label class="tiny muted">硬性断电</label><input type="time" id="r-cutoff" value="${sleepCutoff}"></div>
+      <div style="flex:1;min-width:120px"><label class="tiny muted">自然入睡</label><input type="time" id="r-natural" value="${sleepNatural}"></div>
+      <div style="flex:1;min-width:120px"><label class="tiny muted">睡眠时长</label><input type="number" id="r-hours" value="${sleepHours}" step="0.5" min="4" max="12"></div>
+    </div>
+    <button class="btn pri block" style="margin-top:12px" data-act="save-rhythm">保存节律</button>
+    <div class="tiny muted" style="margin-top:10px;line-height:1.7">
+      💡 规则：深度睡眠在前半夜,如果你 ${sleepNatural} 才睡,早上会很难"开机"。把创作峰控制在 ${sleepCutoff} 前 2 小时, ${sleepCutoff} 必须合电脑。
+    </div>
+  </div>
+
+  <h2 class="sec">早晨"暴力醒脑"清单</h2>
+  <div class="card">
+    <div class="tiny muted" style="margin-bottom:8px">不是意志力问题,是前额叶还没通电:</div>
+    <div class="kv"><span>🚿 冷水泼脸 30 秒</span><span class="tiny muted">刺激迷走神经</span></div>
+    <div class="kv"><span>☀️ 强光 5-10 分钟</span><span class="tiny muted">抑制褪黑素</span></div>
+    <div class="kv"><span>🥚 蛋白质+脂肪早餐</span><span class="tiny muted">避免高碳水昏迷</span></div>
+    <div class="kv"><span>☕ 咖啡因别空腹</span><span class="tiny muted">吃完后 30 分钟再喝</span></div>
+    <div class="kv"><span>🚶 走动 2 分钟</span><span class="tiny muted">比坐着硬撑有效</span></div>
+  </div>
+
+  <h2 class="sec">今日能量地图</h2>
+  <div class="card">
+    <div class="tiny muted">基于当前配置的一日节律</div>
+    <div class="rhythm-bar" style="height:42px">${rhythmBlocks().map(b=>`<div class="${b.id}" style="width:${b.pct}%;font-size:11px">${b.label}</div>`).join('')}</div>
+    <div class="row between tiny muted" style="margin-top:6px"><span>00:00</span><span>12:00</span><span>24:00</span></div>
+  </div>`;
+}
+
+/* ===== Quest 页 ===== */
+function vQuests(){
+  try{
+  const v = document.getElementById('view-quests');
+  if(openQuest){
+    const q = findQuest(openQuest);
+    if(!q){ openQuest=null; return vQuests(); }
+    v.innerHTML = vQuestDetail(q);
+    renderQuestWorkspace(q);
+    bindNetCanvas(q);
+    return;
+  }
+  const qs = S.quests.slice().sort((a,b)=>b.updated-a.updated);
+  v.innerHTML = `
+  <div class="row between" style="margin:6px 0 10px">
+    <h2 class="sec" style="margin:0">Quest · ${qs.length}</h2>
+    <button class="btn sm pri" data-act="new-quest">➕ 新建</button>
+  </div>
+  <div class="card tight tiny muted" style="margin-bottom:14px">
+    Quest = 任何你要处理的事。每个 Quest 都按「🕸 网 → 🌳 树 → ✅ 线」三段走,先发散再收敛再执行。
+  </div>
+  ${qs.length? qs.map(q=>{
+    const steps = lineItems(q).filter(x=>!x.n.done);
+    const done = lineItems(q).filter(x=>x.n.done).length;
+    const total = lineItems(q).length;
+    const pct = total? Math.round(done/total*100):0;
+    return `<div class="card ${q.status==='net'?'net':q.status==='tree'?'tree':q.status==='line'?'line':''}" style="margin-bottom:10px">
+      <div class="row between">
+        <h3 class="sec" style="margin:0;font-size:15px">${esc(q.title)}</h3>
+        <span class="badge ${q.status}">${q.status==='net'?'🕸 网':q.status==='tree'?'🌳 树':q.status==='line'?'✅ 线':'✓ 完成'}</span>
+      </div>
+      <div class="tiny muted" style="margin:6px 0">${q.type} · ${steps.length} 步待做 · ${q.net.nodes.length} 节点 · ${pct}%</div>
+      <div class="bar" style="height:6px;background:var(--bg2);border-radius:99px;overflow:hidden"><i style="display:block;height:100%;width:${pct}%;background:var(--line);border-radius:99px"></i></div>
+      <div class="row" style="margin-top:10px;gap:6px">
+        <button class="btn xs" data-act="open-quest" data-id="${q.id}">打开</button>
+        <button class="btn xs" data-act="focus-quest" data-id="${q.id}">🎯 下一步</button>
+        ${q.today?`<button class="btn xs ghost" data-act="q-untoday" data-id="${q.id}">移出今天</button>`
+                 :`<button class="btn xs ghost" data-act="q-today" data-id="${q.id}">☀️ 今天</button>`}
+      </div>
+    </div>`;
+  }).join('')
+  : `<div class="empty"><span class="big">🕸</span>还没有 Quest。点右上角新建,或者去首页快速创建。</div>`}
+  `;
+  }catch(e){ document.getElementById('view-quests').innerHTML = '<div class="card warn">渲染出错: '+esc(e.message)+'</div>'; console.error(e); }
+}
+
+function vQuestDetail(q){
+  const netNodes = q.net.nodes.length;
+  const treeItems = q.tree.drawers.reduce((a,d)=>a+d.items.length,0);
+  const lineItems2 = q.line.length;
+  const done = q.line.filter(n=>n.done).length;
+  
+  return `
+  <div class="row" style="margin:6px 0 10px">
+    <button class="btn xs ghost" data-act="back-quests">‹ 返回</button>
+    <div class="grow"></div>
+    <button class="btn xs" data-act="edit-quest" data-id="${q.id}">编辑</button>
+  </div>
+  
+  <div class="card ${q.status==='net'?'net':q.status==='tree'?'tree':'line'}">
+    <div class="row between">
+      <h3 class="sec" style="margin:0">${esc(q.title)}</h3>
+      <span class="badge ${q.status}">${q.status==='net'?'🕸 网':q.status==='tree'?'🌳 树':q.status==='line'?'✅ 线':'✓ 完成'}</span>
+    </div>
+    <div class="tiny muted" style="margin:6px 0">${q.type} · ${done}/${lineItems2} 步完成</div>
+    <div class="bar" style="height:6px;background:var(--bg2);border-radius:99px;overflow:hidden"><i style="display:block;height:100%;width:${lineItems2?Math.round(done/lineItems2*100):0}%;background:var(--line);border-radius:99px"></i></div>
+    <div class="row" style="margin-top:10px;gap:6px">
+      <button class="btn sm" data-act="tab-net" data-id="${q.id}" style="${q.status==='net'?'background:var(--net2);color:#fff':''}">🕸 网 (${netNodes})</button>
+      <button class="btn sm" data-act="tab-tree" data-id="${q.id}" style="${q.status==='tree'?'background:var(--tree2);color:#fff':''}">🌳 树 (${treeItems})</button>
+      <button class="btn sm" data-act="tab-line" data-id="${q.id}" style="${q.status==='line'?'background:var(--line2);color:#fff':''}">✅ 线 (${lineItems2})</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row between">
+      <b class="tiny">探针模式 ${q.probe.active?'🧪 已开启':''}</b>
+      <button class="btn xs" data-act="toggle-probe" data-id="${q.id}">${q.probe.active?'关闭':'开启'}</button>
+    </div>
+    ${q.probe.active?probeHTML(q):`<div class="tiny muted">把大目标变成 2-7 天小实验,先验证再投入。</div>`}
+  </div>
+
+  <div class="card">
+    <div class="row between">
+      <b class="tiny">上下文恢复</b>
+      <button class="btn xs" data-act="save-context" data-id="${q.id}">更新</button>
+    </div>
+    ${q.context.lastNote?`<div class="tiny muted" style="margin-top:6px">上次(${new Date(q.context.lastAt).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})})卡在这:</div>
+      <div style="font-size:13px;margin-top:4px;padding:8px;background:var(--bg2);border-radius:8px">${esc(q.context.lastNote)}</div>`
+      :`<div class="tiny muted" style="margin-top:6px">还没记录卡点。</div>`}
+  </div>
+
+  <div class="card">
+    <div class="row between">
+      <b class="tiny">${q.goodEnough.mode==='60'?'60 分止损版':'100 分完整版'}</b>
+      <button class="btn xs" data-act="toggle-good" data-id="${q.id}">切换到 ${q.goodEnough.mode==='60'?'100 分':'60 分'}</button>
+    </div>
+    <textarea id="q-good" style="margin-top:8px;background:transparent;border:none;padding:4px 0;min-height:50px" placeholder="写下这个版本的完成标准...">${esc(q.goodEnough.mode==='60'?q.goodEnough.sixty:q.goodEnough.hundred)}</textarea>
+  </div>
+
+  <div id="quest-workspace"></div>
+
+  <div style="height:60px"></div>`;
+}
+
+function probeHTML(q){
+  return `<div class="probe-box">
+    <label class="tiny muted">假设</label>
+    <input id="probe-hyp" value="${esc(q.probe.hypothesis)}" placeholder="如果...那么...">
+    <label class="tiny muted" style="display:block;margin-top:8px">成功标准</label>
+    <input id="probe-success" value="${esc(q.probe.success)}" placeholder="做到什么就算探针成功">
+    <label class="tiny muted" style="display:block;margin-top:8px">止损点</label>
+    <input id="probe-stop" value="${esc(q.probe.stopLoss)}" placeholder="什么情况就放弃/换方向">
+    <label class="tiny muted" style="display:block;margin-top:8px">实验天数</label>
+    <input type="number" id="probe-days" value="${q.probe.days}" min="1" max="30">
+    <button class="btn ok block" style="margin-top:10px" data-act="save-probe" data-id="${q.id}">保存探针</button>
+  </div>`;
+}
+
+function renderQuestWorkspace(q){
+  const el = document.getElementById('quest-workspace'); if(!el) return;
+  el.innerHTML = {net:vNet(q), tree:vTree(q), line:vLine(q)}[q.status] || vNet(q);
+  if(q.status==='net') bindNetCanvas(q);
+}
+
+/* ===== Net / Tree / Line ===== */
+function vNet(q){
+  return `
+  <h2 class="sec">🕸 网状构思区 — 只管发散,不许排序</h2>
+  <div class="card tight tiny muted" style="margin-bottom:10px">
+    规则: ① 5 分钟内疯狂丢关键词 ② 圈出 3 个核心节点 ③ 用线连接关联 ④ 超时就硬进树状区
+  </div>
+  <div class="row" style="margin-bottom:10px">
+    <input id="net-input" class="grow" placeholder="输入一个关键词/想法,回车添加">
+    <button class="btn pri" data-act="net-add" data-id="${q.id}">添加</button>
+    <button class="btn ${selectedNetNodes.length>=2?'':'disabled'}" data-act="net-link" data-id="${q.id}" ${selectedNetNodes.length<2?'disabled':''}>连线</button>
+    <button class="btn warn sm" data-act="net-clear" data-id="${q.id}">清空</button>
+  </div>
+  <div class="net-canvas" id="net-canvas">
+    ${q.net.edges.map(e=>netEdgeHTML(q,e)).join('')}
+    ${q.net.nodes.map(n=>netNodeHTML(n,q)).join('')}
+    <div class="hint">点击节点选中,再点另一个连线 · 拖拽移动 · 双击删除</div>
+  </div>
+  <div class="row" style="margin-top:12px;gap:8px">
+    <button class="btn block pri" data-act="to-tree" data-id="${q.id}">🌳 我已经圈出核心,进入树状区</button>
+  </div>`;
+}
+function netNodeHTML(n,q){
+  const selected = selectedNetNodes.includes(n.id);
+  return `<div class="net-node ${selected?'selected':''}" id="nn-${n.id}" data-id="${n.id}" style="left:${n.x}px;top:${n.y}px;background:${n.color||'var(--card)'};border-color:${selected?'var(--net)':''}">${esc(n.text)}</div>`;
+}
+function netEdgeHTML(q,e){
+  const a=q.net.nodes.find(x=>x.id===e.from), b=q.net.nodes.find(x=>x.id===e.to); if(!a||!b) return '';
+  const dx=b.x-a.x, dy=b.y-a.y, len=Math.sqrt(dx*dx+dy*dy), ang=Math.atan2(dy,dx)*180/Math.PI;
+  return `<div class="net-edge" style="left:${a.x+10}px;top:${a.y+14}px;width:${len}px;transform:rotate(${ang}deg)"></div>`;
+}
+function bindNetCanvas(q){
+  const canvas = document.getElementById('net-canvas'); if(!canvas) return;
+  let dragNode=null, dragOff={};
+  canvas.querySelectorAll('.net-node').forEach(node=>{
+    node.onpointerdown = e => {
+      e.stopPropagation();
+      dragNode = node.dataset.id;
+      const n = q.net.nodes.find(x=>x.id===dragNode);
+      dragOff = {x:e.clientX-n.x, y:e.clientY-n.y};
+      node.setPointerCapture(e.pointerId);
+    };
+    node.onpointermove = e => {
+      if(!dragNode || dragNode!==node.dataset.id) return;
+      const n = q.net.nodes.find(x=>x.id===dragNode);
+      n.x = clamp(e.clientX-dragOff.x, 0, canvas.clientWidth-80);
+      n.y = clamp(e.clientY-dragOff.y, 0, canvas.clientHeight-40);
+      node.style.left=n.x+'px'; node.style.top=n.y+'px';
+      renderNetEdges(q);
+    };
+    node.onpointerup = e => { dragNode=null; save(); };
+    node.onclick = e => {
+      e.stopPropagation();
+      toggleSelect(q, node.dataset.id);
+    };
+    node.ondblclick = e => {
+      e.stopPropagation();
+      q.net.nodes = q.net.nodes.filter(x=>x.id!==node.dataset.id);
+      q.net.edges = q.net.edges.filter(x=>x.from!==node.dataset.id && x.to!==node.dataset.id);
+      selectedNetNodes = selectedNetNodes.filter(id=>id!==node.dataset.id);
+      renderQuestWorkspace(q); save();
+    };
+  });
+  canvas.onclick = () => { selectedNetNodes=[]; renderQuestWorkspace(q); };
+}
+function toggleSelect(q, id){
+  const i = selectedNetNodes.indexOf(id);
+  if(i>-1) selectedNetNodes.splice(i,1); else selectedNetNodes.push(id);
+  // 只更新 class,不重绘,避免打断交互
+  document.querySelectorAll('#net-canvas .net-node').forEach(el=>{
+    el.classList.toggle('selected', selectedNetNodes.includes(el.dataset.id));
+  });
+  document.querySelector('[data-act=net-link]')?.toggleAttribute('disabled', selectedNetNodes.length<2);
+}
+function renderNetEdges(q){
+  const canvas = document.getElementById('net-canvas'); if(!canvas) return;
+  canvas.querySelectorAll('.net-edge').forEach(e=>e.remove());
+  const frag = document.createDocumentFragment();
+  q.net.edges.forEach(edge=>{
+    const div = document.createElement('div'); div.className='net-edge'; div.style.cssText = netEdgeHTML(q,edge).match(/style="([^"]+)"/)[1];
+    frag.appendChild(div);
+  });
+  canvas.insertBefore(frag, canvas.firstChild);
+}
+
+function vTree(q){
+  return `
+  <h2 class="sec">🌳 树状翻译区 — 把网压进 5 个抽屉</h2>
+  <div class="card tight tiny muted" style="margin-bottom:10px">
+    把网状节点拖进下面 5 类。如果某个节点放不进去,说明它还不够具体,回网状区再切一刀。
+  </div>
+  <div class="row" style="margin-bottom:10px">
+    <button class="btn pri" data-act="tree-add" data-id="${q.id}">➕ 新增抽屉项</button>
+    <button class="btn" data-act="to-line" data-id="${q.id}">✅ 生成执行线</button>
+    <button class="btn" data-act="back-net" data-id="${q.id}">↩ 回网状区</button>
+  </div>
+  <div class="row wrap" style="gap:10px;align-items:stretch">
+    ${q.tree.drawers.map(d=>`
+      <div style="flex:1;min-width:160px" ondragover="event.preventDefault()" ondrop="dropToDrawer(event,'${q.id}','${d.id}')">
+        <div class="tree-root" style="border-left:3px solid ${d.color}">
+          <h4 style="color:${d.color}">${d.name}</h4>
+          ${d.items.map(it=>`<div class="tree-item" draggable="true" ondragstart="dragItem(event,'${q.id}','${d.id}','${it.id}')">
+            <span class="handle">⋮⋮</span>
+            <span class="grow">${esc(it.text)}</span>
+            <button class="btn xs ghost" onclick="removeTreeItem('${q.id}','${d.id}','${it.id}')">✕</button>
+          </div>`).join('')}
+          ${!d.items.length?`<div class="tiny dim">空</div>`:''}
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+function vLine(q){
+  return `
+  <h2 class="sec">✅ 线性执行区 — 按顺序做,禁止发散</h2>
+  <div class="card tight tiny muted" style="margin-bottom:10px">
+    这里是「手上走线」。任何新想法丢停车区,不许改这里。
+  </div>
+  <div class="row" style="margin-bottom:10px">
+    <input id="line-input" class="grow" placeholder="添加一步(例如:明天10点发试水文)" style="flex:2">
+    <input type="number" id="line-est" placeholder="分钟" value="15" min="1" max="180" style="width:80px">
+    <button class="btn pri" data-act="line-add" data-id="${q.id}">添加</button>
+    <button class="btn" data-act="back-tree" data-id="${q.id}">↩ 回树状区</button>
+  </div>
+  ${q.line.length? q.line.map((n,i)=>`
+    <div class="line-step ${n.done?'done':''}">
+      <button class="chk ${n.done?'on':''}" data-act="line-toggle" data-qid="${q.id}" data-id="${n.id}">✓</button>
+      <div class="grow">
+        <div class="row" style="gap:6px;flex-wrap:wrap">
+          <span style="font-weight:500;${n.done?'text-decoration:line-through':''}">${esc(n.title)}</span>
+          <span class="badge ${(n.est||0)<=15?'ok':(n.est||0)>45?'warn':''}">${n.est||0}分</span>
+          ${n.today?'<span class="badge line">今天</span>':''}
+        </div>
+        <div class="row" style="margin-top:6px;gap:5px">
+          <button class="btn xs" data-act="line-focus" data-qid="${q.id}" data-id="${n.id}">▶ 专注</button>
+          <button class="btn xs ghost" data-act="line-today" data-qid="${q.id}" data-id="${n.id}">${n.today?'移出':'☀️ 今天'}</button>
+          <button class="btn xs ghost" data-act="line-split" data-qid="${q.id}" data-id="${n.id}">🔪 切小</button>
+          <button class="btn xs ghost" data-act="line-del" data-qid="${q.id}" data-id="${n.id}">🗑</button>
+        </div>
+      </div>
+    </div>`).join('')
+    : `<div class="empty tiny">执行线为空。从树状区生成,或手动添加。</div>`}
+  <div class="row" style="margin-top:14px">
+    <button class="btn sm block" data-act="line-focus-next" data-id="${q.id}">🎯 专注下一步</button>
+    <button class="btn sm block" data-act="line-pick" data-id="${q.id}">🎲 随机挑一步</button>
+  </div>`;
+}
+
+/* ===== 停车区 ===== */
+function vParking(){
+  const cats = [
+    {k:'insights', name:'💡 洞察', desc:'突然看懂的关联'},
+    {k:'questions', name:'❓ 问题', desc:'还没想通的点'},
+    {k:'hypotheses', name:'🧪 假设', desc:'如果...那么...'},
+    {k:'friction', name:'⚠️ 卡点', desc:'执行中的阻碍'},
+    {k:'gold', name:'✨ 金句', desc:'值得复用的表达/资料'}
+  ];
+  const v = document.getElementById('view-parking');
+  v.innerHTML = `
+  <div class="card info">
+    <b>🅿️ 想法停车场</b>
+    <div class="tiny muted">专注时冒出来的想法按类型丢进来,结束后统一处理。这是工作记忆外部化。</div>
+    <div class="row" style="margin-top:10px">
+      <input id="park-input" class="grow" placeholder="突然想到...">
+      <select id="park-cat" style="width:110px">${cats.map(c=>`<option value="${c.k}">${c.name}</option>`).join('')}</select>
+      <button class="btn pri" data-act="park-add">记下</button>
+    </div>
+  </div>
+  <div class="row wrap" style="gap:10px;align-items:stretch">
+    ${cats.map(c=>{
+      const items = S.parking[c.k];
+      return `<div style="flex:1;min-width:280px">
+        <h2 class="sec">${c.name} · ${items.length}</h2>
+        ${items.length? items.slice().reverse().map(it=>`<div class="card tight" style="margin-bottom:6px">
+        <div class="row between" style="align-items:flex-start">
+          <div class="grow" style="font-size:13px;word-break:break-word">${esc(it.text)}</div>
+          <div class="row" style="flex-shrink:0">
+            <button class="btn xs" data-act="park-2quest" data-id="${it.id}" data-cat="${c.k}">→ Quest</button>
+            <button class="btn xs ghost" data-act="park-del" data-id="${it.id}" data-cat="${c.k}">✕</button>
+          </div>
+        </div>
+        <div class="tiny muted" style="margin-top:4px">${new Date(it.t).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+      </div>`).join('')
+        : `<div class="empty tiny"><span class="big">${c.name.split(' ')[0]}</span>${c.desc}</div>`}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+/* ===== 蒸馏页 ===== */
+function vDistill(){
+  const v = document.getElementById('view-distill');
+  v.innerHTML = `
+  <div class="card net">
+    <b>🧪 信息蒸馏 SOP</b>
+    <div class="tiny muted">把长文本/复杂信息压成可执行的树和线。四步:侦察 → 重构 → 分层 → 校验。</div>
+  </div>
+  <div class="card">
+    <label class="tiny muted">原始输入(长文本/链接/笔记)</label>
+    <textarea id="distill-raw" style="min-height:120px" placeholder="把你要处理的文章、会议记录、聊天记录贴进来..."></textarea>
+    <div class="row" style="margin-top:8px;gap:8px">
+      <button class="btn pri" data-act="distill-start">开始蒸馏</button>
+      <button class="btn" data-act="distill-clear">清空</button>
+    </div>
+  </div>
+  <div id="distill-steps"></div>`;
+}
+
+/* ===== 洞察页 ===== */
+function vInsights(){
+  const fin = S.sessions.filter(s=>s.finished && s.est>0);
+  const ratio = fin.length? fin.reduce((a,s)=>a+s.secs/60/s.est,0)/fin.length : 0;
+  const totalMin = Math.round(S.sessions.reduce((a,s)=>a+s.secs,0)/60);
+  const days = [...Array(7)].map((_,i)=>{
+    const d = new Date(Date.now()-(6-i)*DAY).toLocaleDateString('sv');
+    return {d, n:S.sessions.filter(s=>s.finished && new Date(s.end).toLocaleDateString('sv')===d).length};
+  });
+  const max = Math.max(1,...days.map(x=>x.n));
+  
+  const v = document.getElementById('view-insights');
+  v.innerHTML = `
+  <h2 class="sec">时间感知校准</h2>
+  <div class="card">
+    ${fin.length<3?`<div class="tiny muted">完成 3 个以上带预估的步骤后,这里会告诉你低估/高估系数。</div>`
+    :`<div style="font-size:28px;font-weight:700;color:${ratio>1.3?'var(--warn)':ratio<0.8?'var(--accent)':'var(--ok)'}">实际是预估的 ${ratio.toFixed(1)} 倍</div>
+      <div class="tiny muted" style="margin-top:6px">${ratio>1.3?'你严重低估耗时——这是 ADHD 典型计划谬误。排期时把估计乘以 '+ratio.toFixed(1):ratio<0.8?'你高估了,任务没你想的那么可怕':`估得挺准`}</div>`}
+  </div>
+  
+  <h2 class="sec">近 7 天完成步数</h2>
+  <div class="card">
+    <div style="display:flex;align-items:flex-end;gap:5px;height:90px;margin-top:8px">
+      ${days.map(x=>`<div style="flex:1;background:${x.n?'var(--accent)':'var(--card2)'};border-radius:5px 5px 0 0;height:${Math.max(4,x.n/max*85)}px;position:relative"><span style="position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:10px;color:var(--muted)">${x.n||''}</span></div>`).join('')}
+    </div>
+    <div class="row between tiny muted" style="margin-top:6px"><span>7天前</span><span>今天</span></div>
+  </div>
+
+  <h2 class="sec">累计</h2>
+  <div class="card">
+    <div class="kv"><span class="muted">累计专注时长</span><b>${Math.floor(totalMin/60)}h ${totalMin%60}m</b></div>
+    <div class="kv"><span class="muted">完成步骤</span><b>${S.sessions.filter(s=>s.finished).length}</b></div>
+    <div class="kv"><span class="muted">Quest 总数</span><b>${S.quests.length}</b></div>
+    <div class="kv"><span class="muted">最长连续</span><b>${S.meta.best||0} 天</b></div>
+    <div class="kv"><span class="muted">放弃/中断</span><b>${S.sessions.filter(s=>!s.finished && s.secs>60).length}</b></div>
+  </div>
+
+  <h2 class="sec">节律数据</h2>
+  <div class="card">
+    <div class="kv"><span class="muted">起床目标</span><b>${S.rhythm.wakeTarget}</b></div>
+    <div class="kv"><span class="muted">上线目标</span><b>${S.rhythm.onlineTarget}</b></div>
+    <div class="kv"><span class="muted">断电时间</span><b>${S.rhythm.sleepCutoff}</b></div>
+    <div class="kv"><span class="muted">睡眠时长</span><b>${S.rhythm.sleepHours}h</b></div>
+  </div>`;
+}
+
+/* ===== 工具函数 ===== */
+function lineItems(q){
+  if(q) return q.line.map(n=>({n, q}));
+  const a=[]; S.quests.forEach(q=>q.line.forEach(n=>a.push({n,q}))); return a;
+}
+function nextLineItem(){
+  const all = lineItems().filter(x=>!x.n.done);
+  if(!all.length) return null;
+  const today = all.filter(x=>x.n.today || x.q.today);
+  const pool = today.length? today : all;
+  return pool.sort((a,b)=>(a.n.est||99)-(b.n.est||99))[0];
+}
+
+/* ===== 专注层 ===== */
+function startFocus(id, opts={}){
+  // id is line node id; find quest + node
+  let found=null;
+  for(const q of S.quests){
+    const n=q.line.find(x=>x.id===id);
+    if(n){ found={q,n}; break; }
+  }
+  if(!found) return toast('找不到这一步');
+  const target = (opts.twoMin?2:(found.n.est||25))*60;
+  focusState = {id, start:Date.now(), elapsed:0, running:true, target, twoMin:!!opts.twoMin, parking:[]};
+  if(ticker) clearInterval(ticker);
+  ticker = setInterval(()=>{ if(focusState?.running){ focusState.elapsed=Math.round((Date.now()-focusState.start)/1000+(focusState.base||0)); renderFocus(); } }, 250);
+  renderAll();
+}
+function pauseFocus(){ if(!focusState) return; if(focusState.running){focusState.base=focusState.elapsed;focusState.running=false;}else{focusState.start=Date.now();focusState.running=true;} renderFocus(); }
+function endFocus(finished){
+  if(!focusState) return;
+  let found=null; for(const q of S.quests){ const n=q.line.find(x=>x.id===focusState.id); if(n){ found={q,n}; break; } }
+  const secs=focusState.elapsed; clearInterval(ticker); ticker=null;
+  if(found){
+    S.sessions.push({id:uid(), title:found.n.title, est:found.n.est||25, start:Date.now()-secs*1000, end:Date.now(), secs, finished});
+    found.n.spent = (found.n.spent||0)+secs;
+    if(finished){ found.n.done=true; found.n.doneAt=Date.now(); bumpStreak(); confetti(); S.meta.pomos=(S.meta.pomos||0)+1; }
+  }
+  focusState=null; closeModal(); save(); renderAll();
+  if(finished){ toast('完成一步 🎉'); if(S.settings.autoNext) setTimeout(()=>{ const n=nextLineItem(); if(n) offerNext(n); }, 700); }
+}
+function bumpStreak(){
+  const t=todayKey();
+  if(S.meta.lastDay!==t){
+    const y=new Date(Date.now()-DAY).toLocaleDateString('sv');
+    S.meta.streak=(S.meta.lastDay===y)?(S.meta.streak||0)+1:1;
+    S.meta.lastDay=t; S.meta.best=Math.max(S.meta.best||0,S.meta.streak);
+  }
+}
+function offerNext(n){
+  sheet(`<h3>🎉 下一步</h3>
+    <div class="card tight" style="margin-bottom:12px"><b>${esc(n.n.title)}</b>
+      <div class="tiny muted">${esc(n.q.title)} · ${n.n.est||0} 分钟</div></div>
+    <button class="btn pri block" data-act="focus" data-id="${n.n.id}">▶ 接着做这个</button>
+    <button class="btn block" style="margin-top:8px" data-act="take-break">休息 5 分钟</button>
+    <button class="btn ghost block" style="margin-top:8px" data-act="close-modal">今天就到这</button>`);
+}
+function renderFocus(){
+  const el=document.getElementById('modal');
+  if(!focusState){ el.innerHTML=''; return; }
+  if(focusState.rest){
+    const e=focusState.elapsed, tgt=focusState.target;
+    const rem=Math.max(0,tgt-e);
+    const mm=String(Math.floor(rem/60)).padStart(2,'0'), ss=String(rem%60).padStart(2,'0');
+    el.innerHTML=`<div class="overlay"><div class="focus-screen">
+      <div class="row between"><div class="tiny muted">休息一下</div><button class="btn xs ghost" data-act="exit-focus">结束 ✕</button></div>
+      <div style="text-align:center;margin-top:36px"><div style="font-size:48px">☕️</div>
+      <div style="font-size:38px;font-weight:700;margin:12px 0">${mm}:${ss}</div>
+      <div class="tiny muted">站起来、喝水、看远处。别刷手机。</div>
+      <button class="btn pri block" style="margin-top:28px" data-act="fpause">${focusState.running?'暂停':'继续'}</button>
+      <button class="btn ghost block" style="margin-top:8px" data-act="exit-focus">结束休息</button></div>
+    </div></div>`;
+    return;
+  }  let found=null; for(const q of S.quests){ const n=q.line.find(x=>x.id===focusState.id); if(n){ found={q,n}; break; } }
+  if(!found){ el.innerHTML=''; return; }
+  const e=focusState.elapsed, tgt=focusState.target, pct=clamp(e/tgt,0,1);
+  const R=94, C=2*Math.PI*R;
+  const mm=String(Math.floor(Math.max(0,(focusState.twoMin?tgt-e:tgt-e))/60)).padStart(2,'0');
+  const ss=String(Math.max(0,(focusState.twoMin?tgt-e:tgt-e))%60).padStart(2,'0');
+  const over=e>tgt;
+  el.innerHTML = `<div class="overlay"><div class="focus-screen">
+    <div class="row between" style="margin-bottom:6px">
+      <div class="tiny muted">${esc(found.q.title)}</div>
+      <button class="btn xs ghost" data-act="exit-focus">退出 ✕</button>
+    </div>
+    <div style="text-align:center;margin:8px 0">
+      <div class="tiny muted">现在只做这一件</div>
+      <div style="font-size:21px;font-weight:700;line-height:1.35;margin:8px 0">${esc(found.n.title)}</div>
+      <div class="tiny muted">预估 ${found.n.est||25} 分钟${over?' · <b style="color:var(--warn)">已超时,可以收了</b>':''}</div>
+    </div>
+    <div class="ring-wrap">
+      <svg width="200" height="200"><circle cx="100" cy="100" r="${R}" fill="none" stroke="var(--card2)" stroke-width="12"/>
+        <circle cx="100" cy="100" r="${R}" fill="none" stroke="${over?'var(--warn)':'var(--accent)'}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct)}" style="transition:stroke-dashoffset .3s"/></svg>
+      <div class="ring-num">${mm}:${ss}<small>${focusState.running?'进行中':'已暂停'}</small></div>
+    </div>
+    <div class="row" style="margin:10px 0">
+      <button class="btn block ${focusState.running?'':'ok'}" data-act="fpause">${focusState.running?'⏸ 暂停':'▶ 继续'}</button>
+      <button class="btn block ok" data-act="fdone">✓ 完成</button>
+    </div>
+    <div class="row wrap" style="gap:6px;margin-bottom:14px">
+      <button class="btn sm ghost" data-act="fhalf">🔪 砍一半</button>
+      <button class="btn sm ghost" data-act="fstuck">😵 卡住了</button>
+      <button class="btn sm ghost" data-act="fpark">💭 记个想法</button>
+    </div>
+    <div class="card" style="border:1px dashed var(--line)">
+      <div class="tiny muted" style="margin-bottom:6px">🅿️ 停车区</div>
+      <div class="row"><input id="park-in" class="grow" placeholder="突然想到..."><button class="btn sm" data-act="park-add-focus">记下</button></div>
+    </div>
+    <div class="tiny muted center" style="margin-top:16px">做不下去不是意志力问题,是这一步切得还不够小。</div>
+  </div></div>`;
+}
+
+function confetti(){
+  const c=document.getElementById('confetti'), ctx=c.getContext('2d');
+  c.width=innerWidth; c.height=innerHeight;
+  const colors=['#60a5fa','#f59e0b','#34d399','#f472b6','#a78bfa'];
+  const ps=[...Array(70)].map(()=>({x:Math.random()*c.width,y:-20-Math.random()*c.height*.5,vy:2+Math.random()*3,vx:-1+Math.random()*2,s:5+Math.random()*7,r:Math.random()*360,c:colors[Math.floor(Math.random()*colors.length)]}));
+  let f=0;
+  (function draw(){ ctx.clearRect(0,0,c.width,c.height); f++; ps.forEach(p=>{p.y+=p.vy;p.x+=p.vx;p.r+=6;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r*Math.PI/180);ctx.fillStyle=p.c;ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);ctx.restore();}); if(f<110)requestAnimationFrame(draw);else ctx.clearRect(0,0,c.width,c.height); })();
+}
+
+/* ===== 事件委托 ===== */
+document.addEventListener('click', e=>{
+  const b=e.target.closest('[data-act], [data-tab]'); if(!b) return;
+  const a=b.dataset.act||'', id=b.dataset.id;
+  
+  // Tab switching
+  if(b.dataset.tab){ TAB=b.dataset.tab; if(TAB!=='quests') openQuest=null; selectedNetNodes=[]; renderAll(); window.scrollTo(0,0); return; }
+  
+  // Dash
+  if(a==='tab-rhythm'){ TAB='rhythm'; renderAll(); return; }
+  if(a==='quick-quest'){ openNewQuestSheet(); return; }
+  if(a==='quick-park'){ TAB='parking'; renderAll(); return; }
+  if(a==='quick-distill'){ TAB='distill'; renderAll(); return; }
+  if(a==='open-handoff'){ openHandoffSheet(); return; }
+  if(a==='morning-task'){ toast('已加入早晨离线校准清单'); return; }
+  if(a==='focus'||a==='line-focus'){
+    const nid = b.dataset.id || b.dataset.id;
+    closeModal(); startFocus(nid); return;
+  }
+  if(a==='two-min'){
+    closeModal();
+    let found=null; for(const q of S.quests){ const n=q.line.find(x=>x.id===id); if(n){ found={q,n}; break; } }
+    if(!found) return;
+    const nn = {id:uid(), title:`[2分钟] ${found.n.title}`, est:2, done:false, spent:0, today:false, created:Date.now()};
+    found.q.line.splice(found.q.line.indexOf(found.n),0,nn);
+    save(); renderAll(); startFocus(nn.id,{twoMin:true}); return;
+  }
+  
+  // Rhythm
+  if(a==='save-rhythm'){
+    S.rhythm.wakeTarget=document.getElementById('r-wake').value;
+    S.rhythm.onlineTarget=document.getElementById('r-online').value;
+    S.rhythm.sleepCutoff=document.getElementById('r-cutoff').value;
+    S.rhythm.sleepNatural=document.getElementById('r-natural').value;
+    S.rhythm.sleepHours=parseFloat(document.getElementById('r-hours').value)||7.5;
+    save(); renderAll(); toast('节律已保存'); return;
+  }
+  
+  // Quests list
+  if(a==='new-quest'){ openNewQuestSheet(); return; }
+  if(a==='open-quest'){ openQuest=id; renderAll(); return; }
+  if(a==='back-quests'){ openQuest=null; selectedNetNodes=[]; renderAll(); return; }
+  if(a==='edit-quest'){ openEditQuestSheet(id); return; }
+  if(a==='q-today'){ const q=findQuest(id); if(q){q.today=true; save(); renderAll();} return; }
+  if(a==='q-untoday'){ const q=findQuest(id); if(q){q.today=false; save(); renderAll();} return; }
+  if(a==='focus-quest'){
+    const q=findQuest(id); if(!q) return;
+    const items=q.line.filter(n=>!n.done).sort((x,y)=>(x.est||99)-(y.est||99));
+    if(!items.length) return toast('没有可执行的步骤');
+    startFocus(items[0].id); return;
+  }
+  
+  // Quest detail tabs
+  if(a==='tab-net'||a==='tab-tree'||a==='tab-line'){
+    const q=findQuest(id); if(q){q.status=a.replace('tab-',''); q.updated=Date.now(); save(); renderAll();} return;
+  }
+  
+  // Net actions
+  if(a==='net-add'){
+    const q=findQuest(id); const inp=document.getElementById('net-input'); const v=inp.value.trim(); if(!v) return;
+    q.net.nodes.push({id:uid(), text:v, x:q.net.nextX, y:q.net.nextY, color:'var(--card)'});
+    q.net.nextX = (q.net.nextX + 90) % 260; if(q.net.nextX<50) q.net.nextX=50;
+    q.net.nextY = (q.net.nextY + 60) % 300; if(q.net.nextY<50) q.net.nextY=50;
+    inp.value=''; q.updated=Date.now(); save(); renderAll(); return;
+  }
+  if(a==='net-link'){
+    const q=findQuest(id);
+    if(selectedNetNodes.length>=2){
+      q.net.edges.push({from:selectedNetNodes[0], to:selectedNetNodes[1]});
+      selectedNetNodes=[]; q.updated=Date.now(); save(); renderAll();
+    } return;
+  }
+  if(a==='net-clear'){ const q=findQuest(id); q.net.nodes=[]; q.net.edges=[]; selectedNetNodes=[]; save(); renderAll(); return; }
+  if(a==='to-tree'){ const q=findQuest(id); q.status='tree'; q.updated=Date.now(); save(); renderAll(); return; }
+  
+  // Tree actions
+  if(a==='tree-add'){
+    const q=findQuest(id);
+    sheet(`<h3>新增抽屉项</h3>
+      <input id="tree-text" placeholder="一句话">
+      <select id="tree-drawer" style="margin-top:8px">${q.tree.drawers.map(d=>`<option value="${d.id}">${d.name}</option>`).join('')}</select>
+      <button class="btn pri block" style="margin-top:12px" data-act="tree-add-confirm" data-id="${q.id}">添加</button>`);
+    return;
+  }
+  if(a==='tree-add-confirm'){
+    const q=findQuest(id); const text=document.getElementById('tree-text').value.trim(); const did=document.getElementById('tree-drawer').value;
+    if(text){ q.tree.drawers.find(d=>d.id===did).items.push({id:uid(), text}); q.updated=Date.now(); save(); closeModal(); renderAll(); }
+    return;
+  }
+  if(a==='to-line'){
+    const q=findQuest(id);
+    // 把 action drawer 里的 item 转成 line steps, 其他 drawer 转成上下文注释
+    const action = q.tree.drawers.find(d=>d.id==='action');
+    q.line = action.items.map(it=>({id:uid(), title:it.text, est:15, done:false, spent:0, today:false, created:Date.now()}));
+    // 如果没有 action,用所有 drawer 的 item
+    if(!q.line.length) q.line = q.tree.drawers.flatMap(d=>d.items).map(it=>({id:uid(), title:`[${dName(d.id)}] ${it.text}`, est:15, done:false, spent:0, today:false, created:Date.now()}));
+    q.status='line'; q.updated=Date.now(); save(); renderAll(); toast(`生成 ${q.line.length} 步`); return;
+  }
+  if(a==='back-net'){ const q=findQuest(id); q.status='net'; q.updated=Date.now(); save(); renderAll(); return; }
+  
+  // Line actions
+  if(a==='line-add'){
+    const q=findQuest(id); const title=document.getElementById('line-input').value.trim(); const est=parseInt(document.getElementById('line-est').value)||15;
+    if(title){ q.line.push({id:uid(), title, est:clamp(est,1,180), done:false, spent:0, today:false, created:Date.now()}); save(); renderAll(); }
+    return;
+  }
+  if(a==='line-toggle'){ const q=findQuest(b.dataset.qid); const n=q.line.find(x=>x.id===id); if(n){n.done=!n.done; if(n.done){n.doneAt=Date.now();bumpStreak();confetti();} save(); renderAll();} return; }
+  if(a==='line-today'){ const q=findQuest(b.dataset.qid); const n=q.line.find(x=>x.id===id); if(n){n.today=!n.today; save(); renderAll();} return; }
+  if(a==='line-split'){ const q=findQuest(b.dataset.qid); const n=q.line.find(x=>x.id===id); if(n){ const e=Math.max(5,Math.round((n.est||20)/2)); n.est=e; q.line.splice(q.line.indexOf(n)+1,0,{id:uid(), title:`${n.title}(后半)`, est:e, done:false, spent:0, today:false, created:Date.now()}); save(); renderAll(); toast('已切半');} return; }
+  if(a==='line-del'){ const q=findQuest(b.dataset.qid); q.line=q.line.filter(x=>x.id!==id); save(); renderAll(); return; }
+  if(a==='back-tree'){ const q=findQuest(id); q.status='tree'; q.updated=Date.now(); save(); renderAll(); return; }
+  if(a==='line-focus-next'){ const q=findQuest(id); const items=q.line.filter(n=>!n.done).sort((x,y)=>(x.est||99)-(y.est||99)); if(items.length) startFocus(items[0].id); else toast('都做完了'); return; }
+  if(a==='line-pick'){ const q=findQuest(id); const items=q.line.filter(n=>!n.done); if(items.length) startFocus(items[Math.floor(Math.random()*items.length)].id); else toast('都做完了'); return; }
+  
+  // Probe
+  if(a==='toggle-probe'){ const q=findQuest(id); q.probe.active=!q.probe.active; save(); renderAll(); return; }
+  if(a==='save-probe'){
+    const q=findQuest(id); q.probe.hypothesis=document.getElementById('probe-hyp').value.trim();
+    q.probe.success=document.getElementById('probe-success').value.trim();
+    q.probe.stopLoss=document.getElementById('probe-stop').value.trim();
+    q.probe.days=parseInt(document.getElementById('probe-days').value)||7;
+    save(); renderAll(); toast('探针已保存'); return;
+  }
+  
+  // Context / Good enough
+  if(a==='save-context'){
+    const q=findQuest(id); const note = prompt('你现在卡在哪?'); if(note===null) return;
+    q.context.lastNote=note; q.context.lastAt=Date.now(); save(); renderAll(); toast('已记录卡点'); return;
+  }
+  if(a==='toggle-good'){ const q=findQuest(id); const ta=document.getElementById('q-good'); if(!ta) return;
+    if(q.goodEnough.mode==='60'){ q.goodEnough.sixty=ta.value.trim(); q.goodEnough.mode='100'; }
+    else { q.goodEnough.hundred=ta.value.trim(); q.goodEnough.mode='60'; }
+    save(); renderAll(); return;
+  }
+  
+  // Parking
+  if(a==='park-add'){
+    const text=document.getElementById('park-input').value.trim(); const cat=document.getElementById('park-cat').value;
+    if(text){ S.parking[cat].push({id:uid(), text, t:Date.now()}); save(); renderAll(); }
+    return;
+  }
+  if(a==='park-del'){ const cat=b.dataset.cat; S.parking[cat]=S.parking[cat].filter(x=>x.id!==id); save(); renderAll(); return; }
+  if(a==='park-2quest'){
+    const cat=b.dataset.cat; const it=S.parking[cat].find(x=>x.id===id); if(!it) return;
+    S.parking[cat]=S.parking[cat].filter(x=>x.id!==id);
+    const q=addQuest(it.text, 'project'); q.status='net'; save(); renderAll(); toast('已转成 Quest'); return;
+  }
+  if(a==='park-add-focus'){
+    const inp=document.getElementById('park-in'); const v=inp.value.trim(); if(!v||!focusState) return;
+    S.parking.insights.push({id:uid(), text:v, t:Date.now()}); inp.value=''; save(); toast('记下了'); return;
+  }
+  
+  // Distill
+  if(a==='distill-start'){
+    const raw=document.getElementById('distill-raw').value.trim(); if(!raw) return toast('先贴内容');
+    document.getElementById('distill-steps').innerHTML = distillHTML(raw);
+    return;
+  }
+  if(a==='distill-clear'){ document.getElementById('distill-raw').value=''; document.getElementById('distill-steps').innerHTML=''; return; }
+  if(a==='distill-save'){
+    const raw=document.getElementById('distill-raw').value.trim();
+    const title = raw.slice(0,30) + (raw.length>30?'...':'');
+    const q=addQuest(title, 'study');
+    q.distill.scout = document.getElementById('d-scout').value.trim();
+    q.distill.restructure = document.getElementById('d-restructure').value.trim();
+    q.distill.layers = document.getElementById('d-layers').value.split('
+').filter(Boolean);
+    q.distill.verify = document.getElementById('d-verify').value.trim();
+    // 把 layer 转成 tree action
+    q.tree.drawers.find(d=>d.id==='action').items = q.distill.layers.map(l=>({id:uid(), text:l}));
+    save(); TAB='quests'; renderAll(); toast('已生成 Quest'); return;
+  }
+  
+  // Focus controls
+  if(a==='fpause'){ pauseFocus(); return; }
+  if(a==='fdone'){ endFocus(true); return; }
+  if(a==='exit-focus'){ endFocus(false); return; }
+  if(a==='fhalf'){
+    if(!focusState) return; let found=null; for(const q of S.quests){ const n=q.line.find(x=>x.id===focusState.id); if(n){ found={q,n}; break; } }
+    if(!found) return; const e=Math.max(4,Math.round((found.n.est||20)/2)); found.n.title='[前半] '+found.n.title; found.n.est=e;
+    found.q.line.splice(found.q.line.indexOf(found.n)+1,0,{id:uid(), title:'[后半] '+found.n.title.replace('[前半] ',''), est:e, done:false, spent:0, today:false, created:Date.now()});
+    focusState.target=e*60; save(); renderAll(); toast('砍半,先做前半'); return;
+  }
+  if(a==='fstuck'){ openStuckSheet(); return; }
+  if(a==='fpark'){ document.getElementById('park-in')?.focus(); return; }
+  if(a==='stuck-easiest'){ endFocus(false); const n=nextLineItem(); if(n) startFocus(n.n.id); else toast('没有别的了'); return; }
+  if(a==='stuck-shuffle'){ endFocus(false); const all=lineItems().filter(x=>!x.n.done); if(all.length) startFocus(all[Math.floor(Math.random()*all.length)].n.id); else toast('没了'); return; }
+  if(a==='take-break'){
+    closeModal();
+    focusState={id:null,start:Date.now(),elapsed:0,running:true,target:S.settings.brk*60,rest:true,parking:[]};
+    if(ticker) clearInterval(ticker); ticker=setInterval(()=>{ if(focusState?.running){focusState.elapsed=Math.round((Date.now()-focusState.start)/1000+(focusState.base||0)); renderFocus();}},250); renderFocus(); return;
+  }
+  
+  // Settings
+  if(a==='btn-theme'){ S.settings.theme=S.settings.theme==='dark'?'light':'dark'; save(); renderAll(); return; }
+  if(a==='btn-set'){ openSettingsSheet(); return; }
+  if(a==='close-modal'){ closeModal(); return; }
+});
+
+function dName(id){ return {problem:'问题',hypothesis:'假设',solution:'方案',conclusion:'结论',action:'行动'}[id]||id; }
+
+/* ===== Sheet helpers ===== */
+function openNewQuestSheet(){
+  sheet(`<h3>🕸 新建 Quest</h3>
+    <input id="q-title" placeholder="例如: 验证新的招聘流程 / 写年度总结">
+    <select id="q-type" style="margin-top:8px"><option value="project">项目</option><option value="study">学习/研究</option><option value="probe">探针实验</option><option value="life">生活/杂务</option></select>
+    <div class="tiny muted" style="margin:10px 0">Quest 会按「网→树→线」三段走,先发散再收敛再执行。</div>
+    <button class="btn pri block" data-act="create-quest">创建</button>
+    <button class="btn ghost block" style="margin-top:8px" data-act="close-modal">取消</button>`);
+}
+function openEditQuestSheet(id){
+  const q=findQuest(id);
+  sheet(`<h3>编辑 Quest</h3>
+    <input id="q-title" value="${esc(q.title)}">
+    <select id="q-type" style="margin-top:8px"><option value="project" ${q.type==='project'?'selected':''}>项目</option><option value="study" ${q.type==='study'?'selected':''}>学习/研究</option><option value="probe" ${q.type==='probe'?'selected':''}>探针实验</option><option value="life" ${q.type==='life'?'selected':''}>生活/杂务</option></select>
+    <button class="btn pri block" style="margin-top:12px" data-act="save-quest" data-id="${q.id}">保存</button>
+    <button class="btn warn block" style="margin-top:8px" data-act="del-quest" data-id="${q.id}">删除</button>
+    <button class="btn ghost block" style="margin-top:8px" data-act="close-modal">取消</button>`);
+}
+function openHandoffSheet(){
+  sheet(`<h3>🌙 3-2-1 交接仪式</h3>
+    <div class="tiny muted" style="margin-bottom:12px">合上电脑前,把明天的"加载期"要用的东西写出去。越少越好。</div>
+    <label class="tiny muted">3 — 明天最重要的 3 件事(只写结果,不写过程)</label>
+    <textarea id="h3">${esc(S.handoff.three||'')}</textarea>
+    <label class="tiny muted" style="display:block;margin-top:10px">2 — 2 个待验证的假设/疑问</label>
+    <textarea id="h2">${esc(S.handoff.two||'')}</textarea>
+    <label class="tiny muted" style="display:block;margin-top:10px">1 — 明早睁眼后,只做这一件(必须是 2 分钟能启动的)</label>
+    <input id="h1" value="${esc(S.handoff.one||'')}">
+    <button class="btn pri block" style="margin-top:14px" data-act="save-handoff">保存交接</button>
+    <button class="btn ghost block" style="margin-top:8px" data-act="close-modal">取消</button>`);
+}
+function openStuckSheet(){
+  sheet(`<h3>😵 卡住了,很正常</h3>
+    <div class="tiny muted" style="margin-bottom:14px">卡住不是懒。选一个:</div>
+    <button class="btn block" style="margin-bottom:8px;text-align:left" data-act="fhalf">🔪 这一步太大 — 砍一半</button>
+    <button class="btn block" style="margin-bottom:8px;text-align:left" data-act="stuck-easiest">🍼 先做整个系统里最简单的那步</button>
+    <button class="btn block" style="margin-bottom:8px;text-align:left" data-act="stuck-shuffle">🎲 换一件别的做</button>
+    <button class="btn block" style="margin-bottom:8px;text-align:left" data-act="two-min" data-id="${focusState?.id}">⚡ 只要 2 分钟,做完可以停</button>
+    <button class="btn ghost block" style="margin-top:12px" data-act="close-modal">关闭</button>`);
+}
+function openSettingsSheet(){
+  sheet(`<h3>⚙️ 设置</h3>
+    <label class="tiny muted">专注时长(分钟)</label><input type="number" id="s-focus" value="${S.settings.focus}">
+    <label class="tiny muted" style="display:block;margin-top:10px">短休息(分钟)</label><input type="number" id="s-brk" value="${S.settings.brk}">
+    <label class="tiny muted" style="display:block;margin-top:10px">上午离线校准提醒</label>
+    <select id="s-morning"><option value="true" ${S.settings.morningBlock?'selected':''}>开启</option><option value="false" ${!S.settings.morningBlock?'selected':''}>关闭</option></select>
+    <div class="row" style="margin-top:12px;gap:8px">
+      <button class="btn block grow" data-act="export">导出备份</button>
+      <button class="btn block grow" data-act="import">导入</button>
+    </div>
+    <button class="btn pri block" style="margin-top:10px" data-act="save-settings">保存设置</button>
+    <button class="btn ghost block" style="margin-top:8px" data-act="close-modal">关闭</button>`);
+}
+
+/* ===== 更多事件: 创建/保存 quest / handoff / settings ===== */
+document.addEventListener('click', e=>{
+  const b=e.target.closest('[data-act]'); if(!b) return;
+  const a=b.dataset.act, id=b.dataset.id;
+  if(a==='create-quest'){
+    const title=document.getElementById('q-title').value.trim(); if(!title) return toast('写个名字');
+    const q=addQuest(title, document.getElementById('q-type').value); closeModal(); openQuest=q.id; TAB='quests'; save(); renderAll(); toast('Quest 已创建');
+  }
+  if(a==='save-quest'){
+    const q=findQuest(id); q.title=document.getElementById('q-title').value.trim()||q.title; q.type=document.getElementById('q-type').value; save(); closeModal(); renderAll();
+  }
+  if(a==='del-quest'){ if(confirm('删除这个 Quest?')){ deleteQuest(id); closeModal(); openQuest=null; save(); renderAll(); } }
+  if(a==='save-handoff'){
+    S.handoff.three=document.getElementById('h3').value.trim();
+    S.handoff.two=document.getElementById('h2').value.trim();
+    S.handoff.one=document.getElementById('h1').value.trim();
+    S.handoff.date=todayKey();
+    S.handoff.morning = S.handoff.one;
+    S.handoff.evening = `3:${S.handoff.three}
+2:${S.handoff.two}
+1:${S.handoff.one}`;
+    save(); closeModal(); renderAll(); toast('交接完成,明早见');
+  }
+  if(a==='export'){
+    const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'}); const a2=document.createElement('a'); a2.href=URL.createObjectURL(blob); a2.download='neuroos-'+todayKey()+'.json'; a2.click(); toast('已导出');
+  }
+  if(a==='import'){
+    const i=document.createElement('input'); i.type='file'; i.accept='.json';
+    i.onchange=()=>{ const r=new FileReader(); r.onload=()=>{ try{ S=mergeDeep(DEF(), JSON.parse(r.result)); save(); closeModal(); renderAll(); toast('导入成功'); }catch(e){toast('格式不对');} }; r.readAsText(i.files[0]); }; i.click();
+  }
+  if(a==='wipe'){ if(confirm('清空全部数据?建议先导出。')){ S=DEF(); save(); closeModal(); renderAll(); } }
+  if(a==='save-settings'){
+    S.settings.focus=parseInt(document.getElementById('s-focus').value)||25;
+    S.settings.brk=parseInt(document.getElementById('s-brk').value)||5;
+    S.settings.morningBlock=document.getElementById('s-morning').value==='true';
+    save(); closeModal(); renderAll(); toast('设置已保存');
+  }
+});
+
+function distillHTML(raw){
+  return `<div class="card net">
+      <b>侦察 Scout</b>
+      <div class="tiny muted">原文中真正值得处理的信息是什么?删掉噪音。</div>
+      <textarea id="d-scout" style="margin-top:8px;min-height:60px" placeholder="列出 3-5 个核心信息点"></textarea>
+    </div>
+    <div class="card tree">
+      <b>重构 Restructure</b>
+      <div class="tiny muted">用你自己的话,把核心信息压成一句话结论。</div>
+      <input id="d-restructure" placeholder="如果只看一句,结论是...">
+    </div>
+    <div class="card line">
+      <b>分层 Layers</b>
+      <div class="tiny muted">把结论拆成可执行的层,每行一步。</div>
+      <textarea id="d-layers" style="min-height:80px" placeholder="1. ...
+2. ...
+3. ..."></textarea>
+    </div>
+    <div class="card info">
+      <b>校验 Verify</b>
+      <div class="tiny muted">这件事做了之后,能反向推出原来的结论吗?</div>
+      <input id="d-verify" placeholder="成功标准 / 验证方式">
+    </div>
+    <button class="btn pri block" data-act="distill-save">生成 Quest</button>`;
+}
+
+/* ===== 拖放 & 全局键盘 ===== */
+window.dragItem = function(ev, qid, did, iid){ ev.dataTransfer.setData('text/plain', JSON.stringify({qid,did,iid})); };
+window.dropToDrawer = function(ev, qid, targetDid){
+  ev.preventDefault();
+  const data=JSON.parse(ev.dataTransfer.getData('text/plain'));
+  const q=findQuest(qid); if(!q) return;
+  const sD=q.tree.drawers.find(d=>d.id===data.did); const tD=q.tree.drawers.find(d=>d.id===targetDid);
+  const it=sD.items.find(x=>x.id===data.iid); if(!it) return;
+  sD.items=sD.items.filter(x=>x.id!==data.iid); tD.items.push(it); save(); renderAll();
+};
+window.removeTreeItem = function(qid, did, iid){
+  const q=findQuest(qid); q.tree.drawers.find(d=>d.id===did).items=q.tree.drawers.find(d=>d.id===did).items.filter(x=>x.id!==iid); save(); renderAll();
+};
+
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){ closeModal(); return; }
+  const typing=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+  if(typing){
+    if(e.target.id==='net-input' && e.key==='Enter'){ document.querySelector('[data-act=net-add]')?.click(); }
+    if(e.target.id==='line-input' && e.key==='Enter'){ document.querySelector('[data-act=line-add]')?.click(); }
+    if(e.target.id==='park-input' && e.key==='Enter'){ document.querySelector('[data-act=park-add]')?.click(); }
+    if(e.target.id==='park-in' && e.key==='Enter'){ document.querySelector('[data-act=park-add-focus]')?.click(); }
+    return;
+  }
+  if(e.key==='n'||e.key==='N'){ openNewQuestSheet(); }
+  if(e.key==='f'||e.key==='F'){ const n=nextLineItem(); if(n) startFocus(n.n.id); else toast('没有下一步'); }
+  if(e.key==='p'||e.key==='P'){ TAB='parking'; renderAll(); }
+});
+
+/* ===== 启动 ===== */
+if(!S.quests.length && !S.parking.insights.length){
+  const demo = newQuest('示例:写年度总结', 'project');
+  demo.net.nodes = [
+    {id:uid(), text:'年度总结', x:40, y:40, color:'var(--net)'},
+    {id:uid(), text:'数据', x:160, y:60, color:'var(--net)'},
+    {id:uid(), text:'故事线', x:100, y:140, color:'var(--net)'},
+    {id:uid(), text:'领导想看什么', x:240, y:120, color:'var(--net)'}
+  ];
+  demo.net.edges = [{from:demo.net.nodes[0].id, to:demo.net.nodes[1].id}, {from:demo.net.nodes[0].id, to:demo.net.nodes[2].id}];
+  demo.tree.drawers.find(d=>d.id==='problem').items = [{id:uid(), text:'不知道领导最关注哪块'}];
+  demo.tree.drawers.find(d=>d.id==='hypothesis').items = [{id:uid(), text:'数据比故事更能说服'}];
+  demo.tree.drawers.find(d=>d.id==='action').items = [
+    {id:uid(), text:'列出 3 个核心数据'},
+    {id:uid(), text:'写第一版烂草稿'},
+    {id:uid(), text:'补图表'},
+    {id:uid(), text:'通读修改'},
+    {id:uid(), text:'排版归档'}
+  ];
+  demo.line = demo.tree.drawers.find(d=>d.id==='action').items.map(it=>({id:uid(), title:it.text, est:15, done:false, spent:0, today:false, created:Date.now()}));
+  demo.status='line';
+  demo.updated=Date.now();
+  S.quests.push(demo);
+  save();
+}
+renderAll();
+
+</script>
+</body>
+</html>

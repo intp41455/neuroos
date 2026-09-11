@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0c10">
+<title>NeuroOS · 极简版</title>
+<style>
+:root{
+  --bg:#0a0c10; --bg2:#14161d; --card:#1b1e27; --line:#2a2e3b;
+  --text:#f0f2f6; --muted:#8b92a8; --pri:#7c5cff; --pri2:#9d85ff;
+  --ok:#3ccf7a; --warn:#ffb648; --danger:#ff6b6b;
+  --font:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+  --r:18px;
+}
+[data-theme=light]{ --bg:#f6f7fa; --bg2:#eef0f5; --card:#fff; --line:#e2e5ed; --text:#1a1d26; --muted:#6b7280; }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.55}
+body{display:flex;flex-direction:column;max-width:520px;margin:0 auto;padding:0}
+button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer}
+.wrap{padding:16px}
+
+/* Top */
+.topbar{padding:12px 16px 6px;background:linear-gradient(180deg,var(--bg),transparent)}
+.topbar .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+h1{font-size:20px;font-weight:700;letter-spacing:-.3px}
+.pill{font-size:12px;padding:5px 12px;border-radius:99px;background:var(--card);color:var(--muted);border:1px solid var(--line)}
+
+/* Tabs */
+.tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;display:flex;justify-content:space-around;padding:10px 0 calc(10px + env(safe-area-inset-bottom));background:rgba(var(--bg), .92);backdrop-filter:blur(12px);border-top:1px solid var(--line);z-index:40}
+.tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:var(--muted);transition:.15s}
+.tabbar button .ic{font-size:20px;line-height:1}
+.tabbar button.on{color:var(--pri);font-weight:600}
+
+/* Views */
+main{flex:1;overflow-y:auto;padding:0 16px 90px;scroll-behavior:smooth}
+.view{display:none}
+.view.on{display:block}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:14px;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+.card-title{font-size:15px;font-weight:700;margin-bottom:6px}
+.card-sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+
+/* Big action */
+.big-action{display:block;width:100%;padding:18px;border-radius:var(--r);background:var(--pri);color:#fff;font-size:17px;font-weight:700;text-align:center;margin:10px 0;transition:.15s}
+.big-action:active{transform:scale(.98)}
+.big-action.ok{background:var(--ok)}
+.big-action.warn{background:var(--warn);color:#1a1d26}
+
+/* Inputs */
+input,textarea,select{width:100%;padding:14px 16px;border-radius:14px;border:1px solid var(--line);background:var(--bg2);color:var(--text);font-size:15px;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--pri)}
+textarea{min-height:120px;resize:vertical}
+.input-row{display:flex;gap:10px;margin:12px 0}
+.input-row input{flex:1}
+.btn{padding:12px 18px;border-radius:12px;background:var(--bg2);color:var(--text);font-size:14px;font-weight:600;white-space:nowrap}
+.btn.pri{background:var(--pri);color:#fff}
+.btn.ok{background:var(--ok);color:#0a0c10}
+.btn.warn{background:var(--warn);color:#1a1d26}
+.btn.ghost{background:transparent;color:var(--muted)}
+.btn.block{display:block;width:100%;text-align:center;margin:8px 0}
+.btn.sm{padding:8px 12px;font-size:12px;border-radius:10px}
+
+/* Now view */
+.phase-big{text-align:center;padding:30px 20px}
+.phase-big .emoji{font-size:56px;margin-bottom:10px}
+.phase-big .name{font-size:26px;font-weight:800;margin-bottom:6px}
+.phase-big .desc{font-size:15px;color:var(--muted)}
+.countdown{font-size:42px;font-weight:300;font-variant-numeric:tabular-nums;margin:16px 0}
+.next-box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.next-box .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.next-box .title{font-size:20px;font-weight:700;margin-bottom:12px}
+.next-box .meta{font-size:13px;color:var(--muted);margin-bottom:14px}
+
+/* Quest list */
+.quest-item{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:10px}
+.quest-item .title{font-size:16px;font-weight:700;margin-bottom:6px}
+.quest-item .meta{font-size:13px;color:var(--muted);margin-bottom:12px}
+.quest-item .progress{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:12px}
+.quest-item .progress i{display:block;height:100%;background:var(--pri);border-radius:99px}
+.step-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.step-row:last-child{border-bottom:none}
+.step-row .chk{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent}
+.step-row.done .chk{background:var(--ok);border-color:var(--ok);color:#0a0c10}
+.step-row.done .text{text-decoration:line-through;color:var(--muted)}
+.step-row .text{flex:1;font-size:15px}
+
+/* Focus overlay */
+.focus-layer{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center}
+.focus-layer .task{font-size:24px;font-weight:700;margin-bottom:30px;max-width:420px}
+.focus-layer .timer{font-size:72px;font-weight:200;font-variant-numeric:tabular-nums;margin-bottom:30px}
+.focus-layer .actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.focus-layer .park{position:fixed;bottom:20px;left:16px;right:16px}
+.focus-layer .park input{background:var(--card);border-color:var(--line)}
+
+/* Modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:90;display:flex;align-items:flex-end;justify-content:center}
+.modal-sheet{background:var(--card);width:100%;max-width:520px;max-height:85vh;border-radius:24px 24px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom));overflow-y:auto}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:16px}
+
+/* Toast */
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-100px);background:var(--card);color:var(--text);padding:12px 20px;border-radius:12px;border:1px solid var(--line);z-index:120;opacity:0;transition:.25s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Empty */
+.empty{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty .big{font-size:48px;display:block;margin-bottom:12px}
+
+/* Lists */
+.list-item{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--line)}
+.list-item:last-child{border-bottom:none}
+.list-item .left{flex:1}
+.list-item .right{display:flex;gap:8px}
+
+/* Stats */
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:14px 0}
+.stat-box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;text-align:center}
+.stat-box .num{font-size:28px;font-weight:800;color:var(--pri)}
+.stat-box .label{font-size:12px;color:var(--muted);margin-top:4px}
+
+/* Hide scrollbar */
+::-webkit-scrollbar{width:0;height:0}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="row">
+  <h1>🧠 NeuroOS</h1>
+  <span id="phase-pill" class="pill">加载中</span>
+</div></div>
+
+<main id="app">
+  <section class="view on" id="view-now"></section>
+  <section class="view" id="view-quests"></section>
+  <section class="view" id="view-capture"></section>
+  <section class="view" id="view-me"></section>
+</main>
+
+<nav class="tabbar" id="tabbar">
+  <button data-tab="now" class="on"><span class="ic">⚡</span>现在</button>
+  <button data-tab="quests"><span class="ic">📋</span>任务</button>
+  <button data-tab="capture"><span class="ic">🧠</span>记录</button>
+  <button data-tab="me"><span class="ic">🔧</span>设置</button>
+</nav>
+
+<div id="modal"></div>
+<div id="toast" class="toast"></div>
+
+<script>
+const KEY='neuroos-v1';
+const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);
+const DAY=864e5;
+const todayKey=()=>new Date().toLocaleDateString('sv');
+let S,TAB='now',focusState=null;
+
+/* ---------- Templates ---------- */
+const TEMPLATES={
+  write:{label:'写作',steps:[['定一句话核心观点',5],['列3个支撑点',10],['写最烂的第一稿',20],['改一遍',15],['定标题收尾',10]]},
+  research:{label:'研究',steps:[['明确一个问题',5],['找2个可靠来源',15],['摘录关键信息',15],['整理成一句话结论',10],['标出还不确定的点',10]]},
+  learn:{label:'学习',steps:[['看目录/框架',5],['快速扫读一遍',15],['记录3个新概念',15],['用自己的话复述',15],['做一道练习/应用',15]]},
+  plan:{label:'策划',steps:[['定目标和Deadline',5],['列必须出现的元素',10],['排优先级',10],['做出最小可行版',20],['检查遗漏',10]]},
+  talk:{label:'沟通',steps:[['想清要对方做什么',5],['写3条要点',10],['开场说结论',10],['补充必要背景',10],['确认下一步',5]]},
+  tidy:{label:'整理',steps:[['分类成3堆',10],['快速决定第一批',15],['处理第二批',15],['收尾归位',10],['拍照/记录',5]]},
+  dev:{label:'开发',steps:[['拆出一个最小功能点',10],['写伪代码/流程',10],['实现核心逻辑',25],['自测一遍',15],['提交/备份',5]]},
+  habit:{label:'习惯',steps:[['穿上鞋/准备好',3],['做5分钟',5],['再5分钟',5],['记录完成',2],['奖励自己',5]]},
+  default:{label:'通用',steps:[['想清楚最终成果',5],['拆成3小步',10],['先做第一步',15],['继续下一步',15],['收尾',10]]}
+};
+
+function classify(t){
+  const s=t.toLowerCase();
+  if(/写|文章|报告|总结|文案|论文|稿/.test(s)) return 'write';
+  if(/查|研究|调研|资料|文献|分析/.test(s)) return 'research';
+  if(/学|课|书|教程|知识/.test(s)) return 'learn';
+  if(/策划|活动|会议|项目|方案|旅行|派对/.test(s)) return 'plan';
+  if(/沟通|谈|说|聊|打电话|邮件|反馈/.test(s)) return 'talk';
+  if(/整理|收拾|归档|分类|清/.test(s)) return 'tidy';
+  if(/代码|开发|程序|功能|bug|修复/.test(s)) return 'dev';
+  if(/习惯|运动|冥想|阅读|早起|喝水/.test(s)) return 'habit';
+  return 'default';
+}
+
+/* ---------- Storage ---------- */
+function load(){
+  try{ S=JSON.parse(localStorage.getItem(KEY)); }catch(e){}
+  if(!S) S=sampleData();
+  migrate();
+}
+function save(){ localStorage.setItem(KEY,JSON.stringify(S)); }
+function migrate(){
+  S.settings ||= {wake:'09:00',start:'10:00',wind:'22:00',sleep:'00:30',theme:'dark'};
+  S.quests ||= [];
+  S.parking ||= {insight:[],question:[],block:[],idea:[],quote:[]};
+  S.distills ||= [];
+  S.log ||= {sessions:[],completions:[]};
+  S.handoff ||= {d3:'',d2:'',d1:'',date:''};
+}
+function sampleData(){
+  const q=mkQuest('示例：写一份季度总结');
+  return {settings:{wake:'09:00',start:'10:00',wind:'22:00',sleep:'00:30',theme:'dark'},quests:[q],parking:{insight:[],question:[],block:[],idea:[],quote:[]},distills:[],log:{sessions:[],completions:[]},handoff:{d3:'',d2:'',d1:'',date:''}};
+}
+function mkQuest(title){
+  const type=classify(title);
+  const tmpl=TEMPLATES[type];
+  return {
+    id:uid(),title,type,
+    status:'line',
+    steps:tmpl.steps.map(([t,e])=>({id:uid(),title:t,est:e,done:false,today:false})),
+    today:true,
+    created:Date.now(),updated:Date.now()
+  };
+}
+
+/* ---------- Phase ---------- */
+function parseHM(s){ const [h,m]=s.split(':').map(Number); return h*60+m; }
+function currentPhase(){
+  const now=new Date();
+  const min=now.getHours()*60+now.getMinutes();
+  const w=parseHM(S.settings.wake), s=parseHM(S.settings.start), wd=parseHM(S.settings.wind), sl=parseHM(S.settings.sleep);
+  if(sl<w){ // night crosses midnight
+    if(min>=sl && min<w) return {key:'sleep',name:'睡眠期',emoji:'🌙',desc:'现在不是工作时间，好好休息'};
+  }else{
+    if(min>=sl || min<w) return {key:'sleep',name:'睡眠期',emoji:'🌙',desc:'现在不是工作时间，好好休息'};
+  }
+  if(min>=w && min<s) return {key:'calibrate',name:'校准期',emoji:'🌅',desc:'低刺激启动，不要立刻处理复杂任务'};
+  if(min>=s && min<wd) return {key:'deep',name:'深度期',emoji:'⚡',desc:'大脑在线，做最难的事'};
+  return {key:'creative',name:'创意期',emoji:'🔥',desc:'适合发散、整理、收尾'};
+}
+function nextBoundaryMin(){
+  const now=new Date(); const min=now.getHours()*60+now.getMinutes();
+  const boundaries=[parseHM(S.settings.wake),parseHM(S.settings.start),parseHM(S.settings.wind),parseHM(S.settings.sleep)];
+  for(let b of boundaries) if(b>min) return b;
+  return boundaries[0]+1440;
+}
+function fmtDuration(min){
+  const h=Math.floor(min/60), m=min%60;
+  return h? `${h}小时${m}分`:`${m}分钟`;
+}
+function timeLeft(){
+  const now=new Date(); const cur=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
+  const next=nextBoundaryMin()*60;
+  let diff=next-cur; if(diff<0) diff+=86400;
+  const h=Math.floor(diff/3600), m=Math.floor((diff%3600)/60), s=diff%60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+/* ---------- Quest helpers ---------- */
+function allSteps(q){ return q.steps || []; }
+function nextStep(q){ return allSteps(q).find(s=>!s.done); }
+function progress(q){ const a=allSteps(q); if(!a.length) return 0; return Math.round(a.filter(s=>s.done).length/a.length*100); }
+function questProgress(){
+  const active=S.quests.filter(q=>q.today);
+  const totalSteps=active.reduce((n,q)=>n+allSteps(q).length,0);
+  const doneSteps=active.reduce((n,q)=>n+allSteps(q).filter(s=>s.done).length,0);
+  return {total:totalSteps,done:doneSteps};
+}
+function findQuest(id){ return S.quests.find(q=>q.id===id); }
+
+/* ---------- Render ---------- */
+function renderAll(){
+  document.documentElement.dataset.theme=S.settings.theme;
+  document.getElementById('phase-pill').textContent=currentPhase().name;
+  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===TAB));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id===`view-${TAB}`));
+  const fn={now:vNow,quests:vQuests,capture:vCapture,me:vMe}[TAB];
+  if(fn) fn();
+  if(focusState) renderFocus();
+}
+
+function vNow(){
+  const phase=currentPhase();
+  const {total,done}=questProgress();
+  const pct=total?Math.round(done/total*100):0;
+  // pick next step
+  let next=null, quest=null;
+  for(const q of S.quests.filter(q=>q.today)){
+    const s=nextStep(q); if(s){ next=s; quest=q; break; }
+  }
+  document.getElementById('view-now').innerHTML=`
+  <div class="phase-big">
+    <div class="emoji">${phase.emoji}</div>
+    <div class="name">${phase.name}</div>
+    <div class="desc">${phase.desc}</div>
+    <div class="countdown" id="countdown">${timeLeft()}</div>
+    <div class="desc">距离下一阶段</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">今日进度</div>
+    <div class="progress" style="height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:10px 0"><i style="display:block;height:100%;width:${pct}%;background:var(--pri);border-radius:99px"></i></div>
+    <div class="card-sub">${done}/${total} 步完成 · ${S.quests.filter(q=>q.today).length} 个任务</div>
+  </div>
+
+  ${next?`
+  <div class="next-box">
+    <div class="label">接下来只做这一件</div>
+    <div class="title">${esc(next.title)}</div>
+    <div class="meta">来自：${esc(quest.title)} · 预估 ${next.est||15} 分钟</div>
+    <button class="big-action" data-act="focus-next">▶ 开始专注</button>
+  </div>`:`<div class="card empty"><span class="big">🎉</span>今天没有待做步骤了，去休息或记录新想法。</div>`}
+
+  ${S.handoff.date!==todayKey()?`
+  <div class="card">
+    <div class="card-title">🌙 睡前交接</div>
+    <div class="card-sub">3个重点 / 2个假设 / 1个明早第一步</div>
+    <button class="btn block" data-act="open-handoff">填写交接</button>
+  </div>`:`<div class="card"><div class="card-title">🌅 明早第一步</div><div style="font-size:16px;font-weight:600">${S.handoff.d1||'还没设置'}</div></div>`}
+  `;
+  startCountdown();
+}
+
+let cdTimer=null;
+function startCountdown(){
+  if(cdTimer) clearInterval(cdTimer);
+  const el=document.getElementById('countdown');
+  if(el) el.textContent=timeLeft();
+  cdTimer=setInterval(()=>{ const el=document.getElementById('countdown'); if(el) el.textContent=timeLeft(); },1000);
+}
+
+function vQuests(){
+  const v=document.getElementById('view-quests');
+  const qs=S.quests.slice().sort((a,b)=>b.updated-a.updated);
+  v.innerHTML=`
+  <div class="input-row">
+    <input id="new-quest-title" placeholder="输入一件事，比如：写季度总结">
+    <button class="btn pri" data-act="add-quest">添加</button>
+  </div>
+  <div class="card" style="padding:12px 16px">
+    <div style="font-size:13px;color:var(--muted)">💡 输入后会自动识别类型并拆成5小步。只做下一步。</div>
+  </div>
+  ${qs.map(q=>{
+    const p=progress(q);
+    const nxt=nextStep(q);
+    return `<div class="quest-item">
+      <div class="title">${esc(q.title)}</div>
+      <div class="meta">${TEMPLATES[q.type]?.label||'通用'} · ${q.today?'☀️ 今天':'📦 仓库'} · ${nxt?'下一步：'+esc(nxt.title):'已完成'}</div>
+      <div class="progress"><i style="width:${p}%"></i></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn pri" data-act="focus-quest" data-id="${q.id}">▶ 专注</button>
+        <button class="btn" data-act="toggle-today" data-id="${q.id}">${q.today?'移出今天':'☀️ 今天'}</button>
+        <button class="btn ghost" data-act="delete-quest" data-id="${q.id}">删除</button>
+      </div>
+      <div style="margin-top:12px">
+        ${allSteps(q).map((s,i)=>`<div class="step-row ${s.done?'done':''}" data-id="${s.id}" data-qid="${q.id}">
+          <div class="chk">✓</div>
+          <div class="text">${esc(s.title)}</div>
+          <div class="btn sm ghost" data-act="focus-step" data-qid="${q.id}" data-sid="${s.id}">专注</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('')}
+  ${qs.length?'':'<div class="empty"><span class="big">📋</span>还没有任务，在上面输入一件。</div>'}
+  `;
+}
+
+function vCapture(){
+  const v=document.getElementById('view-capture');
+  const cats=[{k:'idea',l:'💡 想法'},{k:'question',l:'❓ 问题'},{k:'block',l:'🚧 卡点'},{k:'insight',l:'💎 洞察'},{k:'quote',l:'✍️ 金句'}];
+  const items=[];
+  cats.forEach(c=>S.parking[c.k].forEach(it=>items.push({...it,cat:c.k,catLabel:c.l})));
+  items.sort((a,b)=>b.t-a.t);
+  v.innerHTML=`
+  <div class="card">
+    <div class="card-title">快速记录</div>
+    <div class="input-row">
+      <input id="park-text" placeholder="脑中冒出什么就先丢这里">
+      <select id="park-cat" style="width:auto;min-width:90px">
+        ${cats.map(c=>`<option value="${c.k}">${c.l}</option>`).join('')}
+      </select>
+    </div>
+    <button class="btn block pri" data-act="park-add">保存记录</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">信息蒸馏</div>
+    <div class="card-sub">把长资料/文章粘贴进来，整理成可执行结论</div>
+    <textarea id="distill-raw" placeholder="粘贴资料、笔记、聊天记录..."></textarea>
+    <button class="btn block" data-act="distill-run">开始蒸馏</button>
+  </div>
+
+  ${items.length?`<div class="card"><div class="card-title">最近记录</div>
+    ${items.slice(0,15).map(it=>`<div class="list-item">
+      <div class="left">
+        <div style="font-size:13px;color:var(--muted)">${it.catLabel}</div>
+        <div style="font-size:15px">${esc(it.text)}</div>
+      </div>
+      <div class="right"><button class="btn sm ghost" data-act="park-del" data-id="${it.id}" data-cat="${it.cat}">✕</button></div>
+    </div>`).join('')}
+  </div>`:''}
+  `;
+}
+
+function vMe(){
+  const v=document.getElementById('view-me');
+  const logs=S.log.sessions;
+  const week=[0,0,0,0,0,0,0];
+  const now=new Date();
+  logs.forEach(s=>{
+    const d=new Date(s.start);
+    const diff=Math.floor((now-d)/DAY);
+    if(diff>=0 && diff<7) week[6-diff]+=(s.actual||s.est||0);
+  });
+  const totalDone=S.log.completions.length;
+  const totalMin=logs.reduce((n,s)=>n+(s.actual||0),0);
+  v.innerHTML=`
+  <div class="card">
+    <div class="card-title">⏰ 节律设置</div>
+    <div class="card-sub">起床 / 上线 / 断电 / 入睡</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0">
+      <div><div style="font-size:12px;color:var(--muted)">起床</div><input type="time" id="set-wake" value="${S.settings.wake}"></div>
+      <div><div style="font-size:12px;color:var(--muted)">上线</div><input type="time" id="set-start" value="${S.settings.start}"></div>
+      <div><div style="font-size:12px;color:var(--muted)">断电</div><input type="time" id="set-wind" value="${S.settings.wind}"></div>
+      <div><div style="font-size:12px;color:var(--muted)">入睡</div><input type="time" id="set-sleep" value="${S.settings.sleep}"></div>
+    </div>
+    <button class="btn block pri" data-act="save-settings">保存节律</button>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-box"><div class="num">${totalDone}</div><div class="label">已完成</div></div>
+    <div class="stat-box"><div class="num">${Math.round(totalMin)}</div><div class="label">专注分钟</div></div>
+    <div class="stat-box"><div class="num">${S.quests.length}</div><div class="label">总任务</div></div>
+    <div class="stat-box"><div class="num">${week.reduce((a,b)=>a+b,0)}</div><div class="label">近7天分钟</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">外观</div>
+    <button class="btn block" data-act="toggle-theme">切换 ${S.settings.theme==='dark'?'浅色':'深色'} 主题</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">数据备份</div>
+    <div class="card-sub">所有数据存在本机，建议定期导出</div>
+    <button class="btn block" data-act="export-data">导出 JSON</button>
+    <button class="btn block ghost" style="margin-top:8px" data-act="import-data">导入 JSON</button>
+    <button class="btn block warn" style="margin-top:8px" data-act="wipe-data">清空所有数据</button>
+  </div>
+  `;
+}
+
+/* ---------- Focus ---------- */
+function startFocus(qid,sid){
+  const q=findQuest(qid); if(!q) return;
+  const s=sid?allSteps(q).find(x=>x.id===sid):nextStep(q); if(!s) return;
+  focusState={qid,sid:s.id,start:Date.now(),elapsed:0,running:true,est:s.est||15};
+  save(); renderAll();
+  focusTimer=setInterval(tickFocus,1000);
+}
+let focusTimer=null;
+function tickFocus(){
+  if(!focusState||!focusState.running) return;
+  focusState.elapsed=Math.floor((Date.now()-focusState.start)/1000);
+  const el=document.getElementById('focus-timer');
+  if(el) el.textContent=fmtTimer(focusState.elapsed);
+}
+function fmtTimer(sec){
+  const m=Math.floor(sec/60), s=sec%60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+function renderFocus(){
+  const q=findQuest(focusState.qid); if(!q){ endFocus(false); return; }
+  const s=allSteps(q).find(x=>x.id===focusState.sid); if(!s){ endFocus(false); return; }
+  const modal=document.getElementById('modal');
+  modal.innerHTML=`
+  <div class="focus-layer">
+    <div style="position:absolute;top:20px;right:20px"><button class="btn ghost" data-act="exit-focus">✕</button></div>
+    <div class="task">${esc(s.title)}</div>
+    <div class="timer" id="focus-timer">${fmtTimer(focusState.elapsed)}</div>
+    <div style="color:var(--muted);margin-bottom:30px">${focusState.running?'专注中':'已暂停'}</div>
+    <div class="actions">
+      <button class="btn ${focusState.running?'warn':'ok'}" style="font-size:16px;padding:14px 28px" data-act="focus-pause">${focusState.running?'⏸ 暂停':'▶ 继续'}</button>
+      <button class="btn ok" style="font-size:16px;padding:14px 28px" data-act="focus-done">✓ 完成</button>
+    </div>
+    <div class="park">
+      <div class="input-row">
+        <input id="focus-park" placeholder="脑中冒出想法，先丢这里继续专注">
+        <button class="btn" data-act="focus-park-add">保存</button>
+      </div>
+    </div>
+  </div>`;
+}
+function endFocus(record){
+  if(focusTimer){ clearInterval(focusTimer); focusTimer=null; }
+  if(record && focusState){
+    const q=findQuest(focusState.qid);
+    const s=q?allSteps(q).find(x=>x.id===focusState.sid):null;
+    S.log.sessions.push({id:uid(),qid:focusState.qid,sid:focusState.sid,est:focusState.est,actual:Math.floor(focusState.elapsed/60),start:focusState.start,end:Date.now()});
+    if(s){ s.done=true; q.updated=Date.now(); }
+    S.log.completions.push({id:uid(),qid:focusState.qid,sid:focusState.sid,t:Date.now()});
+  }
+  focusState=null; save(); renderAll();
+  document.getElementById('modal').innerHTML='';
+}
+
+/* ---------- Actions ---------- */
+document.addEventListener('click',e=>{
+  // Tabs first (they don't have data-act)
+  const t=e.target.closest('[data-tab]');
+  if(t){ TAB=t.dataset.tab; renderAll(); return; }
+
+  const b=e.target.closest('[data-act]'); if(!b) return;
+  const a=b.dataset.act, id=b.dataset.id, qid=b.dataset.qid, sid=b.dataset.sid;
+
+  switch(a){
+    case 'focus-next': case 'focus-quest': case 'focus-step':{
+      const targetQid=qid||id||nextQuestId(); if(!targetQid) return;
+      startFocus(targetQid,sid); break;
+    }
+    case 'focus-pause': if(focusState){ focusState.running=!focusState.running; if(focusState.running){ focusState.start=Date.now()-focusState.elapsed*1000; focusTimer=setInterval(tickFocus,1000); } renderFocus(); } break;
+    case 'focus-done': endFocus(true); break;
+    case 'exit-focus': endFocus(false); break;
+    case 'focus-park-add':{
+      const inp=document.getElementById('focus-park'); const v=inp?.value.trim(); if(!v) return;
+      S.parking.idea.push({id:uid(),text:v,t:Date.now()}); save(); inp.value=''; toast('已保存到记录'); break;
+    }
+    case 'add-quest':{
+      const inp=document.getElementById('new-quest-title'); const v=inp?.value.trim(); if(!v) return;
+      const q=mkQuest(v); S.quests.unshift(q); save(); inp.value=''; toast('已添加，自动拆成5步'); renderAll(); break;
+    }
+    case 'toggle-today':{
+      const q=findQuest(id); if(q){ q.today=!q.today; q.updated=Date.now(); save(); renderAll(); } break;
+    }
+    case 'delete-quest':{
+      const q=findQuest(id); if(q && confirm('删除这个任务？')){ S.quests=S.quests.filter(x=>x.id!==id); save(); renderAll(); } break;
+    }
+    case 'park-add':{
+      const inp=document.getElementById('park-text'); const v=inp?.value.trim(); const cat=document.getElementById('park-cat')?.value||'idea'; if(!v) return;
+      S.parking[cat].push({id:uid(),text:v,t:Date.now()}); save(); inp.value=''; toast('已记录'); renderAll(); break;
+    }
+    case 'park-del':{
+      S.parking[id]=S.parking[id].filter(x=>x.id!==qid); save(); renderAll(); break;
+    }
+    case 'distill-run':{
+      const raw=document.getElementById('distill-raw')?.value.trim(); if(!raw) return;
+      const lines=raw.split(/\n/).filter(x=>x.trim());
+      const summary=lines.slice(0,3).join('；')||raw.slice(0,80);
+      S.distills.push({id:uid(),raw,summary,t:Date.now()});
+      // also create quest from distill
+      const q=mkQuest('整理：'+summary.slice(0,20));
+      S.quests.unshift(q); save(); toast('已蒸馏并生成任务'); renderAll(); break;
+    }
+    case 'open-handoff': openHandoff(); break;
+    case 'save-handoff': saveHandoff(); break;
+    case 'save-settings': saveSettings(); break;
+    case 'toggle-theme': S.settings.theme=S.settings.theme==='dark'?'light':'dark'; save(); renderAll(); break;
+    case 'export-data': exportData(); break;
+    case 'import-data': importData(); break;
+    case 'wipe-data': if(confirm('确定清空所有数据？不可恢复。')){ localStorage.removeItem(KEY); location.reload(); } break;
+  }
+});
+
+// step checkbox click
+document.addEventListener('click',e=>{
+  const row=e.target.closest('.step-row');
+  if(!row || e.target.closest('[data-act]')) return;
+  const q=findQuest(row.dataset.qid); const s=allSteps(q).find(x=>x.id===row.dataset.id); if(!s) return;
+  s.done=!s.done; q.updated=Date.now(); save(); renderAll();
+});
+
+function nextQuestId(){
+  for(const q of S.quests.filter(q=>q.today)){ if(nextStep(q)) return q.id; }
+  return S.quests[0]?.id;
+}
+
+function openHandoff(){
+  const m=document.getElementById('modal');
+  m.innerHTML=`<div class="modal" data-act="close-handoff">
+    <div class="modal-sheet">
+      <div class="modal-title">🌙 睡前交接</div>
+      <div style="margin-bottom:12px;font-size:13px;color:var(--muted)">写完后明早首页只显示这一条，降低启动阻力。</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <input id="h3" placeholder="今天最重要的3个重点（用 / 分隔）" value="${esc(S.handoff.d3)}">
+        <input id="h2" placeholder="今天产生的2个假设/问题" value="${esc(S.handoff.d2)}">
+        <input id="h1" placeholder="明早第一步做什么" value="${esc(S.handoff.d1)}">
+        <button class="btn block pri" data-act="save-handoff">保存交接</button>
+      </div>
+    </div>
+  </div>`;
+}
+function saveHandoff(){
+  S.handoff={
+    d3:document.getElementById('h3')?.value.trim()||'',
+    d2:document.getElementById('h2')?.value.trim()||'',
+    d1:document.getElementById('h1')?.value.trim()||'',
+    date:todayKey()
+  }; save(); document.getElementById('modal').innerHTML=''; renderAll(); toast('交接已保存');
+}
+function saveSettings(){
+  S.settings.wake=document.getElementById('set-wake').value;
+  S.settings.start=document.getElementById('set-start').value;
+  S.settings.wind=document.getElementById('set-wind').value;
+  S.settings.sleep=document.getElementById('set-sleep').value;
+  save(); renderAll(); toast('节律已保存');
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`neuroos-backup-${todayKey()}.json`; a.click();
+}
+function importData(){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
+  inp.onchange=()=>{ const f=inp.files[0]; if(!f) return; const r=new FileReader(); r.onload=e=>{ try{ S=JSON.parse(e.target.result); save(); location.reload(); }catch(err){ toast('导入失败'); } }; r.readAsText(f); };
+  inp.click();
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function toast(s){ const t=document.getElementById('toast'); t.textContent=s; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+
+// close modal by backdrop
+/* no dedicated handler; click outside sheet won't close for handoff to reduce misclick */
+
+load(); renderAll();
+</script>
+</body>
+</html>
