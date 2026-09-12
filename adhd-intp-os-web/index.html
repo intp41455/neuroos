@@ -177,12 +177,24 @@ textarea{min-height:90px;resize:vertical}
 .workspace-tabs .btn{flex:1}
 .workspace-tabs .btn.on{background:var(--pri);color:#fff}
 
-/* Net */
-.net-canvas{position:relative;width:100%;height:320px;background:var(--bg2);border:1px dashed var(--line);border-radius:var(--r);overflow:hidden;touch-action:none}
+/* Net - infinite canvas */
+.net-viewport{position:relative;width:100%;height:320px;background:var(--bg2);border:1px dashed var(--line);border-radius:var(--r);overflow:hidden;touch-action:none}
+.net-canvas{position:absolute;width:4000px;height:4000px;left:0;top:0;transform-origin:0 0;background:linear-gradient(rgba(200,190,180,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(200,190,180,.06) 1px,transparent 1px);background-size:50px 50px}
 .net-node{position:absolute;padding:7px 11px;border-radius:10px;background:var(--card);border:1px solid var(--line);font-size:12px;cursor:grab;user-select:none;white-space:nowrap;z-index:2;max-width:150px;overflow:hidden;text-overflow:ellipsis}
 .net-node.selected{box-shadow:0 0 0 2px var(--net);border-color:var(--net)}
+.net-node.highlighted{background:#fff3e0;border-color:#ff9800;box-shadow:0 0 0 2px rgba(255,152,0,.3)}
 .net-edge{position:absolute;height:2px;background:var(--muted);transform-origin:left center;z-index:1;pointer-events:none;opacity:.4}
-.net-canvas .hint{position:absolute;bottom:6px;left:6px;color:var(--muted);font-size:10px;background:var(--bg);padding:3px 7px;border-radius:6px}
+.net-viewport .hint{position:absolute;bottom:6px;left:6px;color:var(--muted);font-size:10px;background:var(--bg);padding:3px 7px;border-radius:6px;z-index:10}
+.net-controls{position:absolute;top:8px;right:8px;display:flex;gap:6px;z-index:10}
+.net-controls .btn{padding:5px 10px;font-size:11px;border-radius:8px;background:var(--card);border:1px solid var(--line)}
+.net-counter{position:absolute;top:8px;left:8px;font-size:11px;color:var(--muted);background:var(--card);padding:3px 8px;border-radius:6px;border:1px solid var(--line);z-index:10}
+.net-table{margin-top:10px;max-height:200px;overflow-y:auto}
+.net-table table{width:100%;border-collapse:collapse;font-size:12px}
+.net-table th,.net-table td{padding:6px 10px;text-align:left;border-bottom:1px solid var(--line)}
+.net-table th{font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase}
+.net-table tr:hover{background:var(--bg2)}
+.net-table .idx{color:var(--muted);font-size:10px;width:30px}
+.net-table .hl-mark{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--net);margin-right:4px}
 
 /* Tree */
 .tree-root{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}
@@ -320,7 +332,7 @@ function newQuest(title){
     id:uid(),title:title,type:type,
     status:'line',created:Date.now(),updated:Date.now(),
     today:false,done:false,
-    net:{nodes:[],edges:[],nextX:50,nextY:60},
+    net:{nodes:[],edges:[],nextX:50,nextY:60,viewOffset:{x:0,y:0}},
     tree:{drawers:DRAWERS.map(function(d){ return {id:d.id,name:d.name,color:d.color,items:[]}; })},
     line:[],
     probe:{hypothesis:'',success:'',stopLoss:'',days:7,active:false},
@@ -337,7 +349,7 @@ function newQuest(title){
 function load(){
   try{ S=JSON.parse(localStorage.getItem(KEY)); }catch(e){ S=null; }
   if(!S || typeof S!=='object') S=sampleData();
-  migrate();
+  migrate(); cleanTrash();
 }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){ toast('保存失败'); } }
 function migrate(){
@@ -348,9 +360,11 @@ function migrate(){
   if(!S.log) S.log={sessions:[],completions:[]};
   if(!S.handoff) S.handoff={three:'',two:'',one:'',morning:'',date:''};
   if(!S.meta) S.meta={streak:0,lastDay:null,best:0};
+  if(!S.trash) S.trash=[];
   S.quests.forEach(function(q){
     if(!q.id) q.id=uid();
-    if(!q.net) q.net={nodes:[],edges:[],nextX:50,nextY:60};
+    if(!q.net) q.net={nodes:[],edges:[],nextX:50,nextY:60,viewOffset:{x:0,y:0}};
+    if(q.net && typeof q.net.viewOffset==='undefined') q.net.viewOffset={x:0,y:0};
     if(!q.tree) q.tree={drawers:DRAWERS.map(function(d){ return {id:d.id,name:d.name,color:d.color,items:[]}; })};
     if(!q.line && q.steps) q.line=q.steps.map(function(s){ return {id:s.id||uid(),title:s.title,est:s.est||15,done:!!s.done,spent:s.spent||0,today:!!q.today,created:s.created||Date.now()}; });
     if(!q.line) q.line=[];
@@ -503,36 +517,57 @@ function renderQuestWorkspace(q){
 }
 
 function vNet(q){
-  return '<h2 class="card-title">🕸 网状构思区</h2><div class="card" style="padding:12px 14px"><div class="tiny">规则：5 分钟内疯狂丢关键词 → 圈出核心节点 → 连线关联 → 超时进树状区</div></div><div class="row" style="margin-bottom:10px"><input id="net-input" class="grow" placeholder="输入关键词/想法"><button class="btn pri sm" data-act="net-add" data-id="'+q.id+'">添加</button><button class="btn sm '+(selectedNetNodes.length>=2?'':'disabled')+'" data-act="net-link" data-id="'+q.id+'" '+(selectedNetNodes.length<2?'disabled':'')+'>连线</button><button class="btn sm warn" data-act="net-clear" data-id="'+q.id+'">清空</button></div><div class="net-canvas" id="net-canvas">'+q.net.edges.map(function(e){ return netEdgeHTML(q,e); }).join('')+q.net.nodes.map(function(n){ return netNodeHTML(n,q); }).join('')+'<div class="hint">点击节点选中，再点另一个连线 · 拖拽移动 · 双击删除</div></div><button class="btn block pri" style="margin-top:10px" data-act="to-tree" data-id="'+q.id+'">🌳 已圈出核心，进入树状区</button>';
+  const nodes=q.net.nodes||[], edges=q.net.edges||[], offset=q.net.viewOffset||{x:0,y:0};
+  const highlightedCount=nodes.filter(function(n){ return n.highlighted; }).length;
+  const tableHTML=nodes.length?'<div class="net-table"><table><thead><tr><th class="idx">#</th><th>节点文本</th><th>连线</th></tr></thead><tbody>'+nodes.map(function(n,idx){ const conn=edges.filter(function(e){ return e.from===n.id||e.to===n.id; }).length; return '<tr data-act="net-focus-node" data-id="'+q.id+'" data-nid="'+n.id+'"><td class="idx">'+(idx+1)+'</td><td><span class="hl-mark" style="background:'+(n.highlighted?'#ff9800':'transparent')+'"></span>'+esc(n.text)+'</td><td>'+conn+'</td></tr>'; }).join('')+'</tbody></table></div>':'<div class="tiny muted" style="margin-top:8px">暂无节点</div>';
+  return '<h2 class="card-title">🕸 网状构思区</h2><div class="card" style="padding:12px 14px"><div class="tiny">规则：5 分钟内疯狂丢关键词 → 圈出核心节点 → 连线关联 → 超时进树状区<br>拖拽空白处平移画布 · 节点可拖拽移动 · 双击删除</div></div><div class="row" style="margin-bottom:10px"><input id="net-input" class="grow" placeholder="输入关键词/想法"><button class="btn pri sm" data-act="net-add" data-id="'+q.id+'">添加</button><button class="btn sm '+(selectedNetNodes.length>=2?'':'disabled')+'" data-act="net-link" data-id="'+q.id+'" '+(selectedNetNodes.length<2?'disabled':'')+'>连线</button><button class="btn sm warn" data-act="net-clear" data-id="'+q.id+'">清空</button></div><div class="net-viewport" id="net-viewport"><div class="net-canvas" id="net-canvas" style="transform:translate('+(-offset.x)+'px,'+(-offset.y)+'px)">'+edges.map(function(e){ return netEdgeHTML(q,e); }).join('')+nodes.map(function(n){ return netNodeHTML(n,q); }).join('')+'</div><div class="net-controls"><button class="btn" data-act="net-center" data-id="'+q.id+'" title="回到中心">🏠 中心</button><button class="btn" data-act="net-highlight" data-id="'+q.id+'" title="标记/取消标记选中节点">🎨 高亮</button></div><div class="net-counter">节点 '+nodes.length+(highlightedCount?' · 高亮 '+highlightedCount:'')+'</div><div class="hint">点击节点选中，再点另一个连线 · 拖拽移动 · 双击删除</div></div>'+tableHTML+'<button class="btn block pri" style="margin-top:10px" data-act="to-tree" data-id="'+q.id+'">🌳 已圈出核心，进入树状区</button>';
 }
-function netNodeHTML(n,q){ const selected=selectedNetNodes.indexOf(n.id)>-1; return '<div class="net-node '+(selected?'selected':'')+'" id="nn-'+n.id+'" data-id="'+n.id+'" style="left:'+n.x+'px;top:'+n.y+'px">'+esc(n.text)+'</div>'; }
+function netNodeHTML(n,q){ const selected=selectedNetNodes.indexOf(n.id)>-1; return '<div class="net-node '+(selected?'selected':'')+(n.highlighted?' highlighted':'')+'" id="nn-'+n.id+'" data-id="'+n.id+'" style="left:'+n.x+'px;top:'+n.y+'px">'+esc(n.text)+'</div>'; }
 function netEdgeHTML(q,e){ const a=q.net.nodes.find(function(x){ return x.id===e.from; }), b=q.net.nodes.find(function(x){ return x.id===e.to; }); if(!a||!b) return ''; const dx=b.x-a.x, dy=b.y-a.y, len=Math.sqrt(dx*dx+dy*dy), ang=Math.atan2(dy,dx)*180/Math.PI; return '<div class="net-edge" style="left:'+(a.x+10)+'px;top:'+(a.y+14)+'px;width:'+len+'px;transform:rotate('+ang+'deg)"></div>'; }
 function bindNetCanvas(q){
-  const canvas=document.getElementById('net-canvas'); if(!canvas) return;
-  let dragNode=null, dragOff={};
+  const viewport=document.getElementById('net-viewport'); const canvas=document.getElementById('net-canvas'); if(!viewport||!canvas) return;
+  let dragNode=null, dragOff={}, panning=false, panStart={x:0,y:0}, panOff={x:0,y:0};
+  const getOffset=function(){ return q.net.viewOffset||{x:0,y:0}; };
   canvas.querySelectorAll('.net-node').forEach(function(node){
     node.onpointerdown=function(e){
       e.stopPropagation(); dragNode=node.dataset.id; const n=q.net.nodes.find(function(x){ return x.id===dragNode; });
-      dragOff={x:e.clientX-n.x,y:e.clientY-n.y}; node.setPointerCapture(e.pointerId);
+      dragOff={x:e.clientX,y:e.clientY,nx:n.x,ny:n.y}; node.setPointerCapture(e.pointerId);
     };
     node.onpointermove=function(e){
       if(!dragNode || dragNode!==node.dataset.id) return;
+      const dx=e.clientX-dragOff.x, dy=e.clientY-dragOff.y;
       const n=q.net.nodes.find(function(x){ return x.id===dragNode; });
-      n.x=Math.max(0,Math.min(e.clientX-dragOff.x,canvas.clientWidth-80));
-      n.y=Math.max(0,Math.min(e.clientY-dragOff.y,canvas.clientHeight-40));
+      n.x=Math.max(0,Math.min(dragOff.nx+dx,4000-80));
+      n.y=Math.max(0,Math.min(dragOff.ny+dy,4000-40));
       node.style.left=n.x+'px'; node.style.top=n.y+'px'; renderNetEdges(q);
     };
     node.onpointerup=function(e){ dragNode=null; save(); };
     node.onclick=function(e){ e.stopPropagation(); toggleSelect(q,node.dataset.id); };
     node.ondblclick=function(e){
       e.stopPropagation();
+      const delNode=q.net.nodes.find(function(x){ return x.id===node.dataset.id; });
+      if(delNode) trashItem('net',delNode,q.id);
       q.net.nodes=q.net.nodes.filter(function(x){ return x.id!==node.dataset.id; });
       q.net.edges=q.net.edges.filter(function(x){ return x.from!==node.dataset.id && x.to!==node.dataset.id; });
       selectedNetNodes=selectedNetNodes.filter(function(id){ return id!==node.dataset.id; });
       renderQuestWorkspace(q); save();
     };
   });
-  canvas.onclick=function(){ selectedNetNodes=[]; renderQuestWorkspace(q); };
+  viewport.onmousedown=function(e){
+    if(e.target.closest('.net-node')||e.target.closest('.net-controls')||e.target.closest('.net-counter')) return;
+    panning=true; panStart={x:e.clientX,y:e.clientY}; panOff={...getOffset()};
+    viewport.style.cursor='grabbing'; e.preventDefault();
+  };
+  viewport.onmousemove=function(e){
+    if(!panning) return;
+    const off=getOffset();
+    off.x=Math.max(0,Math.min(panOff.x+e.clientX-panStart.x,4000-viewport.clientWidth));
+    off.y=Math.max(0,Math.min(panOff.y+e.clientY-panStart.y,4000-viewport.clientHeight));
+    canvas.style.transform='translate('+(-off.x)+'px,'+(-off.y)+'px)'; save();
+  };
+  viewport.onmouseup=function(){ panning=false; viewport.style.cursor=''; };
+  viewport.onmouseleave=function(){ panning=false; viewport.style.cursor=''; };
+  viewport.onclick=function(e){ if(!e.target.closest('.net-node')&&!e.target.closest('.net-controls')){ selectedNetNodes=[]; renderQuestWorkspace(q); } };
 }
 function toggleSelect(q,id){
   const i=selectedNetNodes.indexOf(id);
@@ -553,7 +588,7 @@ function renderNetEdges(q){
 }
 
 function vTree(q){
-  return '<h2 class="card-title">🌳 树状翻译区</h2><div class="card" style="padding:12px 14px"><div class="tiny">把节点拖进下面 5 类抽屉。放不进去说明不够具体，回网状区再切。</div></div><div class="row" style="margin-bottom:10px"><button class="btn pri sm" data-act="tree-add" data-id="'+q.id+'">➕ 新增抽屉项</button><button class="btn sm" data-act="to-line" data-id="'+q.id+'">✅ 生成执行线</button><button class="btn sm" data-act="back-net" data-id="'+q.id+'">↩ 回网状区</button></div><div class="row">'+q.tree.drawers.map(function(d){ return '<div style="flex:1;min-width:140px" ondragover="event.preventDefault()" ondrop="dropToDrawer(event,\''+q.id+'\',\''+d.id+'\')"><div class="tree-root" style="border-left:3px solid '+d.color+'"><h4 style="color:'+d.color+'">'+d.name+'</h4>'+d.items.map(function(it){ return '<div class="tree-item" draggable="true" ondragstart="dragItem(event,\''+q.id+'\',\''+d.id+'\',\''+it.id+'\')"><span class="handle">⋮⋮</span><span class="grow">'+esc(it.text)+'</span><button class="btn xs ghost" onclick="removeTreeItem(\''+q.id+'\',\''+d.id+'\',\''+it.id+'\')">✕</button></div>'; }).join('')+(d.items.length?'':'<div class="tiny muted">空</div>')+'</div></div>'; }).join('')+'</div>';
+  return '<h2 class="card-title">🌳 树状翻译区</h2><div class="card" style="padding:12px 14px"><div class="tiny">把节点拖进下面 5 类抽屉。放不进去说明不够具体，回网状区再切。</div></div><div class="row" style="margin-bottom:10px"><button class="btn pri sm" data-act="tree-add" data-id="'+q.id+'">➕ 新增抽屉项</button><button class="btn sm" data-act="to-line" data-id="'+q.id+'">✅ 生成执行线</button><button class="btn sm" data-act="back-net" data-id="'+q.id+'">↩ 回网状区</button><button class="btn sm" data-act="tree-expand-all" data-id="'+q.id+'">📂 全部展开</button><button class="btn sm" data-act="tree-collapse-all" data-id="'+q.id+'">📁 全部收起</button></div><div class="row">'+q.tree.drawers.map(function(d){ const collapsed=d.collapsed; return '<div style="flex:1;min-width:140px" ondragover="event.preventDefault()" ondrop="dropToDrawer(event,\''+q.id+'\',\''+d.id+'\')"><div class="tree-root" style="border-left:3px solid '+d.color+'"><h4 style="color:'+d.color+'">'+d.name+' <button class="btn xs ghost" data-act="tree-toggle" data-id="'+q.id+'" data-did="'+d.id+'">'+(collapsed?'▶':'▼')+'</button></h4>'+(collapsed?'<div class="tiny muted">'+d.items.length+' 项（已收起）</div>':d.items.map(function(it){ return '<div class="tree-item" draggable="true" ondragstart="dragItem(event,\''+q.id+'\',\''+d.id+'\',\''+it.id+'\')"><span class="handle">⋮⋮</span><span class="grow">'+esc(it.text)+'</span><button class="btn xs ghost" onclick="removeTreeItem(\''+q.id+'\',\''+d.id+'\',\''+it.id+'\')">✕</button></div>'; }).join(''))+(d.items.length?'':'<div class="tiny muted">空</div>')+'</div></div>'; }).join('')+'</div>';
 }
 function vLine(q){
   return '<h2 class="card-title">✅ 线性执行区</h2><div class="card" style="padding:12px 14px"><div class="tiny">这里是「手上走线」。新想法丢停车区，不许改这里。</div></div><div class="row" style="margin-bottom:10px"><input id="line-input" class="grow" placeholder="添加一步" style="flex:2"><input type="number" id="line-est" placeholder="分钟" value="15" min="1" max="180" style="width:70px"><button class="btn pri sm" data-act="line-add" data-id="'+q.id+'">添加</button><button class="btn sm" data-act="back-tree" data-id="'+q.id+'">↩ 回树</button></div>'+(q.line.length?q.line.map(function(n){ return '<div class="line-step '+(n.done?'done':'')+'"><div class="chk '+(n.done?'on':'')+'" data-act="line-toggle" data-qid="'+q.id+'" data-id="'+n.id+'">✓</div><div class="grow"><div class="row" style="gap:6px;flex-wrap:wrap"><span style="font-weight:500;'+(n.done?'text-decoration:line-through':'')+'">'+esc(n.title)+'</span><span class="badge">'+(n.est||0)+'分</span>'+(n.today?'<span class="badge linec">今天</span>':'')+'</div><div class="row" style="margin-top:6px;gap:5px"><button class="btn xs" data-act="line-today" data-qid="'+q.id+'" data-id="'+n.id+'">'+(n.today?'移出':'☀️ 今天')+'</button><button class="btn xs ghost" data-act="line-split" data-qid="'+q.id+'" data-id="'+n.id+'">🔪 切小</button><button class="btn xs ghost" data-act="line-del" data-qid="'+q.id+'" data-id="'+n.id+'">🗑</button></div></div></div>'; }).join(''):'<div class="empty tiny">执行线为空。从树状区生成，或手动添加。</div>')+'<div class="row" style="margin-top:12px"><button class="btn sm block" data-act="line-focus-next" data-id="'+q.id+'">🎯 专注下一步</button><button class="btn sm block" data-act="line-pick" data-id="'+q.id+'">🎲 随机挑一步</button></div>';
@@ -579,7 +614,8 @@ function vMe(){
   const days=[]; for(let i=0;i<7;i++){ const d=new Date(Date.now()-(6-i)*DAY).toLocaleDateString('sv'); days.push({d:d,n:S.log.sessions.filter(function(s){ return s.finished && new Date(s.end).toLocaleDateString('sv')===d; }).length}); }
   const max=Math.max(1,...days.map(function(x){ return x.n; }));
   const leftCol='<div class="card hoverable"><div class="card-title">⏰ 节律设置</div><div class="card-sub">起床 / 上线 / 断电 / 入睡</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0"><div><div class="tiny">起床</div><input type="time" id="set-wake" value="'+S.settings.wake+'"></div><div><div class="tiny">上线</div><input type="time" id="set-start" value="'+S.settings.start+'"></div><div><div class="tiny">断电</div><input type="time" id="set-wind" value="'+S.settings.wind+'"></div><div><div class="tiny">入睡</div><input type="time" id="set-sleep" value="'+S.settings.sleep+'"></div></div><div class="card-sub">今日能量地图</div><div class="rhythm-bar">'+rhythmBlocks().map(function(b){ return '<div class="'+b.id+'" style="width:'+b.pct+'%">'+b.label+'</div>'; }).join('')+'</div><button class="btn block pri" data-act="save-settings">保存节律</button></div><div class="card hoverable"><div class="card-title">⚙️ 偏好</div><div class="row between" style="margin:10px 0"><span>上午离线校准提醒</span><select id="set-morning" style="width:auto"><option value="true" '+(S.settings.morningBlock?'selected':'')+'>开启</option><option value="false" '+(S.settings.morningBlock?'':'selected')+'>关闭</option></select></div><div class="row between" style="margin:10px 0"><span>完成自动下一步</span><select id="set-autonext" style="width:auto"><option value="true" '+(S.settings.autoNext?'selected':'')+'>开启</option><option value="false" '+(S.settings.autoNext?'':'selected')+'>关闭</option></select></div></div>';
-  const rightCol='<div class="card hoverable"><div class="card-title">📊 洞察统计</div><div class="stat-grid"><div class="stat-box"><div class="num">'+(ratio?ratio.toFixed(1)+'x':'-')+'</div><div class="label">实际/预估</div></div><div class="stat-box"><div class="num">'+(S.meta.streak||0)+'</div><div class="label">连续天数</div></div><div class="stat-box"><div class="num">'+(S.log.sessions.filter(function(s){ return s.finished; }).length)+'</div><div class="label">完成步骤</div></div><div class="stat-box"><div class="num">'+Math.floor(totalMin/60)+'h '+(totalMin%60)+'m</div><div class="label">累计时长</div></div></div><div class="card-sub">近 7 天完成步数</div><div class="bar-chart">'+days.map(function(x){ return '<div style="height:'+Math.max(4,x.n/max*75)+'px"><span>'+(x.n||'')+'</span></div>'; }).join('')+'</div></div><div class="card hoverable"><div class="card-title">数据备份</div><div class="card-sub">所有数据存在本机，建议定期导出。</div><button class="btn block" data-act="export-data">导出 JSON</button><button class="btn block ghost" style="margin-top:8px" data-act="import-data">导入 JSON</button><button class="btn block warn" style="margin-top:8px" data-act="wipe-data">清空所有数据</button></div>';
+  const trashCount=(S.trash||[]).length;
+  const rightCol='<div class="card hoverable"><div class="card-title">📊 洞察统计</div><div class="stat-grid"><div class="stat-box"><div class="num">'+(ratio?ratio.toFixed(1)+'x':'-')+'</div><div class="label">实际/预估</div></div><div class="stat-box"><div class="num">'+(S.meta.streak||0)+'</div><div class="label">连续天数</div></div><div class="stat-box"><div class="num">'+(S.log.sessions.filter(function(s){ return s.finished; }).length)+'</div><div class="label">完成步骤</div></div><div class="stat-box"><div class="num">'+Math.floor(totalMin/60)+'h '+(totalMin%60)+'m</div><div class="label">累计时长</div></div></div><div class="card-sub">近 7 天完成步数</div><div class="bar-chart">'+days.map(function(x){ return '<div style="height:'+Math.max(4,x.n/max*75)+'px"><span>'+(x.n||'')+'</span></div>'; }).join('')+'</div></div><div class="card hoverable"><div class="card-title">🗑 回收站 <span class="badge">'+trashCount+'</span></div><div class="card-sub">删除的项目暂存 3 天，过期自动清理。</div><button class="btn block" data-act="open-trash">查看回收站</button></div><div class="card hoverable"><div class="card-title">数据备份</div><div class="card-sub">所有数据存在本机，建议定期导出。</div><button class="btn block" data-act="export-data">导出 JSON</button><button class="btn block ghost" style="margin-top:8px" data-act="import-data">导入 JSON</button><button class="btn block warn" style="margin-top:8px" data-act="wipe-data">清空所有数据</button></div>';
   v.innerHTML='<div class="grid-2"><div class="col-left">'+leftCol+'</div><div class="col-right">'+rightCol+'</div></div>';
 }
 
@@ -628,7 +664,7 @@ document.addEventListener('click',function(e){
       if(q && titleEl){ q.title=titleEl.value.trim()||q.title; if(typeEl) q.type=typeEl.value; save(); closeModal(); renderAll(); }
       break;
     }
-    case 'del-quest':{ if(confirm('删除这个任务？')){ S.quests=S.quests.filter(function(x){ return x.id!==id; }); closeModal(); openQuest=null; save(); renderAll(); } break; }
+    case 'del-quest':{ if(confirm('删除这个任务？（进入回收站，3天后自动清理）')){ const q=findQuest(id); if(q) trashItem('quest',q); S.quests=S.quests.filter(function(x){ return x.id!==id; }); closeModal(); openQuest=null; save(); renderAll(); } break; }
     case 'open-quest':{ openQuest=id; selectedNetNodes=[]; renderAll(); break; }
     case 'back-quests':{ openQuest=null; selectedNetNodes=[]; renderAll(); break; }
     case 'edit-quest':{ openEditQuestSheet(id); break; }
@@ -651,6 +687,9 @@ document.addEventListener('click',function(e){
       const q=findQuest(id); if(q && selectedNetNodes.length>=2){ q.net.edges.push({from:selectedNetNodes[0],to:selectedNetNodes[1]}); selectedNetNodes=[]; q.updated=Date.now(); save(); renderAll(); } break;
     }
     case 'net-clear':{ const q=findQuest(id); q.net.nodes=[]; q.net.edges=[]; selectedNetNodes=[]; save(); renderAll(); break; }
+    case 'net-center':{ const q=findQuest(id); if(!q.net.viewOffset) q.net.viewOffset={x:0,y:0}; q.net.viewOffset.x=0; q.net.viewOffset.y=0; save(); renderAll(); break; }
+    case 'net-highlight':{ const q=findQuest(id); selectedNetNodes.forEach(function(nid){ const n=q.net.nodes.find(function(x){ return x.id===nid; }); if(n) n.highlighted=!n.highlighted; }); selectedNetNodes=[]; save(); renderAll(); break; }
+    case 'net-focus-node':{ const q=findQuest(b.dataset.id); const nid=b.dataset.nid; const n=q.net.nodes.find(function(x){ return x.id===nid; }); if(q&&n){ q.net.viewOffset={x:Math.max(0,n.x-150),y:Math.max(0,n.y-100)}; save(); renderAll(); const el=document.getElementById('nn-'+nid); if(el){ el.style.transition='box-shadow .3s'; el.style.boxShadow='0 0 0 4px var(--net)'; setTimeout(function(){ if(el) el.style.boxShadow=''; },800); } } break; }
     case 'to-tree':{ const q=findQuest(id); q.status='tree'; q.updated=Date.now(); save(); renderAll(); break; }
     case 'back-net':{ const q=findQuest(id); q.status='net'; q.updated=Date.now(); save(); renderAll(); break; }
     case 'tree-add':{
@@ -670,6 +709,9 @@ document.addEventListener('click',function(e){
       q.status='line'; q.updated=Date.now(); save(); renderAll(); toast('生成 '+q.line.length+' 步'); break;
     }
     case 'back-tree':{ const q=findQuest(id); q.status='tree'; q.updated=Date.now(); save(); renderAll(); break; }
+    case 'tree-toggle':{ const q=findQuest(id); const d=q.tree.drawers.find(function(x){ return x.id===b.dataset.did; }); if(d){ d.collapsed=!d.collapsed; save(); renderAll(); } break; }
+    case 'tree-expand-all':{ const q=findQuest(id); q.tree.drawers.forEach(function(d){ d.collapsed=false; }); save(); renderAll(); break; }
+    case 'tree-collapse-all':{ const q=findQuest(id); q.tree.drawers.forEach(function(d){ d.collapsed=true; }); save(); renderAll(); break; }
     case 'line-add':{
       const q=findQuest(id); const titleEl=document.getElementById('line-input'); const title=titleEl&&titleEl.value.trim(); const estEl=document.getElementById('line-est'); const est=parseInt(estEl&&estEl.value)||15;
       if(q && title){ q.line.push({id:uid(),title:title,est:Math.max(1,Math.min(180,est)),done:false,spent:0,today:false,created:Date.now()}); save(); renderAll(); } break;
@@ -677,7 +719,7 @@ document.addEventListener('click',function(e){
     case 'line-toggle':{ toggleStep(b.dataset.id); break; }
     case 'line-today':{ const q=findQuest(b.dataset.qid); const n=q.line.find(function(x){ return x.id===b.dataset.id; }); if(n){ n.today=!n.today; save(); renderAll(); } break; }
     case 'line-split':{ const q=findQuest(b.dataset.qid); const n=q.line.find(function(x){ return x.id===b.dataset.id; }); if(n){ const e=Math.max(5,Math.round((n.est||20)/2)); n.est=e; q.line.splice(q.line.indexOf(n)+1,0,{id:uid(),title:n.title+'(后半)',est:e,done:false,spent:0,today:false,created:Date.now()}); save(); renderAll(); toast('已切半'); } break; }
-    case 'line-del':{ const q=findQuest(b.dataset.qid); q.line=q.line.filter(function(x){ return x.id!==b.dataset.id; }); save(); renderAll(); break; }
+    case 'line-del':{ const q=findQuest(b.dataset.qid); const n=q.line.find(function(x){ return x.id===b.dataset.id; }); if(n) trashItem('line',n,q.id); q.line=q.line.filter(function(x){ return x.id!==b.dataset.id; }); save(); renderAll(); break; }
     case 'line-focus-next':{ const q=findQuest(id); const items=q.line.filter(function(n){ return !n.done; }).sort(function(x,y){ return (x.est||99)-(y.est||99); }); if(items.length){ singleStep={id:items[0].id,start:Date.now()}; renderAll(); } else toast('都做完了'); break; }
     case 'line-pick':{ const q=findQuest(id); const items=q.line.filter(function(n){ return !n.done; }); if(items.length){ const pick=items[Math.floor(Math.random()*items.length)]; singleStep={id:pick.id,start:Date.now()}; renderAll(); } else toast('都做完了'); break; }
 
@@ -701,7 +743,7 @@ document.addEventListener('click',function(e){
       const inp=document.getElementById('park-text'); const v=inp&&inp.value.trim(); const catEl=document.getElementById('park-cat'); const cat=catEl&&catEl.value||'idea'; if(!v) return;
       S.parking[cat].push({id:uid(),text:v,t:Date.now()}); save(); inp.value=''; toast('已记录'); renderAll(); break;
     }
-    case 'park-del':{ const cat=b.dataset.cat; S.parking[cat]=S.parking[cat].filter(function(x){ return x.id!==id; }); save(); renderAll(); break; }
+    case 'park-del':{ const cat=b.dataset.cat; const it=S.parking[cat].find(function(x){ return x.id===id; }); if(it) trashItem('parking',{cat:cat,item:it}); S.parking[cat]=S.parking[cat].filter(function(x){ return x.id!==id; }); save(); renderAll(); break; }
     case 'park-2quest':{
       const cat=b.dataset.cat; const it=S.parking[cat].find(function(x){ return x.id===id; }); if(!it) return;
       S.parking[cat]=S.parking[cat].filter(function(x){ return x.id!==id; });
@@ -738,6 +780,10 @@ document.addEventListener('click',function(e){
     case 'export-data':{ exportData(); break; }
     case 'import-data':{ importData(); break; }
     case 'wipe-data':{ if(confirm('确定清空所有数据？不可恢复。')){ localStorage.removeItem(KEY); location.reload(); } break; }
+    case 'open-trash':{ openTrashSheet(); break; }
+    case 'trash-restore':{ if(restoreTrashItem(id)){ toast('已恢复'); save(); renderAll(); } else toast('恢复失败'); break; }
+    case 'trash-delete':{ if(confirm('永久删除？不可恢复。')){ S.trash=S.trash.filter(function(x){ return x.id!==id; }); save(); renderAll(); openTrashSheet(); } break; }
+    case 'trash-empty':{ if(confirm('清空回收站？所有项目将被永久删除。')){ S.trash=[]; save(); renderAll(); openTrashSheet(); } break; }
     case 'morning-task':{ toast('已加入早晨离线校准清单'); break; }
     case 'close-modal':{ closeModal(); break; }
   }
@@ -786,6 +832,13 @@ function openEditQuestSheet(id){
 function openHandoffSheet(){
   sheet('<h3>🌙 3-2-1 交接仪式</h3><div class="tiny muted" style="margin-bottom:12px">合上电脑前，把明天"加载期"要用的东西写出去。越少越好。</div><label class="tiny muted">3 — 明天最重要的 3 件事</label><textarea id="h3">'+esc(S.handoff.three||'')+'</textarea><label class="tiny muted" style="display:block;margin-top:10px">2 — 2 个待验证的假设/疑问</label><textarea id="h2">'+esc(S.handoff.two||'')+'</textarea><label class="tiny muted" style="display:block;margin-top:10px">1 — 明早睁眼后只做这一件</label><input id="h1" value="'+esc(S.handoff.one||'')+'"><button class="btn pri block" style="margin-top:14px" data-act="save-handoff">保存交接</button><button class="btn ghost block" style="margin-top:8px" data-act="close-modal">取消</button>');
 }
+function openTrashSheet(){
+  const items=S.trash||[];
+  const typeLabels={quest:'任务',line:'执行步',tree:'抽屉项',net:'节点',parking:'记录'};
+  const now=Date.now();
+  const listHTML=items.length?items.slice().sort(function(a,b){ return b.deletedAt-a.deletedAt; }).map(function(t){ const daysLeft=Math.max(0,Math.ceil((t.expiresAt-now)/864e5)); return '<div class="list-item" style="align-items:flex-start"><div style="flex:1"><div class="tiny">'+typeLabels[t.type]+' · '+new Date(t.deletedAt).toLocaleDateString()+' · '+daysLeft+'天后过期</div><div style="font-size:14px;margin-top:2px">'+(t.type==='quest'?(t.data.title||'任务'):t.type==='parking'?(t.data.item&&t.data.item.text||'记录'):t.type==='net'?(t.data.text||'节点'):t.type==='tree'?(t.data.item&&t.data.item.text||'抽屉项'):(t.data.title||'项目'))+'</div></div><div class="row" style="gap:5px"><button class="btn sm" data-act="trash-restore" data-id="'+t.id+'">恢复</button><button class="btn xs ghost" data-act="trash-delete" data-id="'+t.id+'">✕</button></div></div>'; }).join(''):'<div class="empty" style="padding:30px"><span class="big">🗑</span><div class="tiny" style="margin-top:8px">回收站为空</div></div>';
+  sheet('<h3>🗑 回收站 <span class="badge">'+items.length+'</span></h3><div class="tiny muted" style="margin-bottom:12px">删除的项目暂存 3 天，过期后自动永久清理。</div>'+listHTML+(items.length?'<button class="btn warn block" style="margin-top:12px" data-act="trash-empty">清空回收站</button>':'')+'<button class="btn ghost block" style="margin-top:8px" data-act="close-modal">关闭</button>');
+}
 function sheet(html){ document.getElementById('modal').innerHTML='<div class="modal"><div class="modal-bg" data-act="close-modal"></div><div class="modal-sheet">'+html+'</div></div>'; }
 function closeModal(){ document.getElementById('modal').innerHTML=''; }
 function distillHTML(raw){
@@ -812,10 +865,39 @@ window.dropToDrawer=function(ev,qid,targetDid){
   sD.items=sD.items.filter(function(x){ return x.id!==data.iid; }); tD.items.push(it); save(); renderAll();
 };
 window.removeTreeItem=function(qid,did,iid){
-  const q=findQuest(qid); const d=q.tree.drawers.find(function(x){ return x.id===did; }); d.items=d.items.filter(function(x){ return x.id!==iid; }); save(); renderAll();
+  const q=findQuest(qid); const d=q.tree.drawers.find(function(x){ return x.id===did; }); const it=d.items.find(function(x){ return x.id===iid; }); if(it) trashItem('tree',{drawerId:did,item:it},q.id); d.items=d.items.filter(function(x){ return x.id!==iid; }); save(); renderAll();
 };
 
 function esc(s){ return String(s===undefined||s===null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* Trash */
+function trashItem(type,data,qid){
+  if(!S.trash) S.trash=[];
+  const now=Date.now();
+  S.trash.push({id:uid(),type:type,data:data,qid:qid||'',deletedAt:now,expiresAt:now+3*864e5});
+  if(S.trash.length>200) S.trash=S.trash.slice(-200);
+}
+function cleanTrash(){
+  if(!S.trash) return;
+  const now=Date.now();
+  const before=S.trash.length;
+  S.trash=S.trash.filter(function(it){ return it.expiresAt>now; });
+  const removed=before-S.trash.length;
+  if(removed>0) console.log('Auto-cleaned '+removed+' expired trash items');
+}
+function restoreTrashItem(tid){
+  if(!S.trash) return false;
+  const idx=S.trash.findIndex(function(x){ return x.id===tid; });
+  if(idx<0) return false;
+  const t=S.trash[idx];
+  if(t.type==='quest'){ S.quests.unshift(t.data); }
+  else if(t.type==='line'){ const q=findQuest(t.qid); if(q) q.line.push(t.data); }
+  else if(t.type==='tree'){ const q=findQuest(t.qid); if(q){ const d=q.tree.drawers.find(function(x){ return x.id===t.data.drawerId; }); if(d) d.items.push(t.data.item); } }
+  else if(t.type==='net'){ const q=findQuest(t.qid); if(q) q.net.nodes.push(t.data); }
+  else if(t.type==='parking'){ S.parking[t.data.cat].push(t.data.item); }
+  S.trash.splice(idx,1);
+  return true;
+}
 function toast(s){ const t=document.getElementById('toast'); t.textContent=s; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); },2000); }
 
 try{ load(); renderAll(); }catch(err){ document.body.innerHTML='<div style="padding:40px 24px;text-align:center;line-height:1.8"><h2>启动出错了</h2><p style="color:var(--muted)">'+esc(err&&err.message?err.message:err)+'</p><p style="margin-top:20px"><button class="btn pri" onclick="location.reload()">刷新试试</button></p><p style="margin-top:20px;font-size:13px;color:var(--muted)">如果反复出现，请换用手机自带浏览器打开，或清除缓存。</p></div>'; }
