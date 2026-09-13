@@ -24,13 +24,13 @@ button{font-family:inherit;border:none;background:none;color:inherit;cursor:poin
 .sidebar .brand{padding:0 20px 24px;font-size:20px;font-weight:800;letter-spacing:-.4px;display:flex;align-items:center;gap:10px}
 .sidebar nav{display:flex;flex-direction:column;gap:4px;padding:0 12px}
 .sidebar nav button{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:12px;font-size:14px;font-weight:600;color:var(--muted);text-align:left}
-.sidebar nav button.on{background:var(--bg2);color:var(--pri)}
+.sidebar nav button.on{background:#FDF2EC;color:#993C1D;font-weight:600}
 .sidebar nav button .ic{font-size:18px;line-height:1}
 .sidebar .side-foot{margin-top:auto;padding:16px 20px 0;font-size:12px;color:var(--muted)}
 
 .main-area{flex:1;display:flex;flex-direction:column;min-width:0}
 .topbar{padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(250,246,241,.92);backdrop-filter:blur(10px);z-index:40;border-bottom:1px solid var(--line)}
-h1{font-size:18px;font-weight:700;letter-spacing:-.2px}
+h1{font-size:20px;font-weight:500;letter-spacing:-.2px}
 .top-actions{display:flex;gap:8px;align-items:center}
 .pill{font-size:12px;padding:6px 14px;border-radius:99px;background:var(--card);color:var(--muted);border:1px solid var(--line);font-weight:600}
 
@@ -113,6 +113,10 @@ textarea{min-height:90px;resize:vertical}
 .btn.xs{padding:4px 8px;font-size:11px;border-radius:7px}
 .btn.big{padding:14px 18px;font-size:15px}
 .btn:disabled{opacity:.4;cursor:not-allowed}
+.btn{transition:filter .12s,transform .12s,background .12s}
+.btn:hover{filter:brightness(.96)}
+.btn:active{transform:scale(.97)}
+.btn.pri:hover{filter:brightness(1.05)}
 
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .row.between{justify-content:space-between}
@@ -202,11 +206,55 @@ textarea{min-height:90px;resize:vertical}
 .tree-item{padding:7px 8px;border-radius:8px;background:var(--card);margin-bottom:5px;font-size:13px;display:flex;gap:7px;align-items:center}
 .tree-item .handle{color:var(--muted);cursor:grab}
 
-/* Line */
-.line-step{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:12px;background:var(--bg2);border:1px solid transparent;margin-bottom:6px}
+/* Line - 层级执行 */
+.line-step{display:flex;gap:9px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:var(--bg2);border:1px solid transparent;margin-bottom:6px;transition:border-color .15s,background .15s}
+.line-step:hover{border-color:var(--line)}
 .line-step.done{opacity:.55}
-.line-step .chk{width:20px;height:20px;min-width:20px;border-radius:6px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent}
+.line-step .chk{width:20px;height:20px;min-width:20px;border-radius:6px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent;cursor:pointer;transition:all .15s}
+.line-step .chk:hover{border-color:var(--ok)}
 .line-step .chk.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.line-step .fold-btn{width:22px;height:22px;min-width:22px;border-radius:6px;border:1px solid var(--line);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted);cursor:pointer;flex-shrink:0;transition:all .15s;user-select:none}
+.line-step .fold-btn:hover{border-color:var(--pri2);color:var(--pri);background:#fffaf6}
+.line-step .fold-btn .cnt{font-size:9px;margin-left:1px}
+.line-step .fold-spacer{width:22px;min-width:22px;height:22px;flex-shrink:0}
+.line-children{margin-left:14px;border-left:2px solid var(--line);padding-left:10px;margin-top:4px}
+.line-children[hidden]{display:none}
+.line-branch{position:absolute;left:-10px;top:16px;width:8px;height:2px;background:var(--line)}
+.line-step{position:relative}
+.line-step.depth-0>.line-branch{display:none}
+.line-empty-hint{font-size:12px;color:var(--muted);padding:6px 2px 8px}
+.line-fold-all{display:flex;gap:5px}
+
+/* Sticky notes board */
+.sticky-board{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:900px){.sticky-board{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1300px){.sticky-board{grid-template-columns:repeat(4,1fr)}}
+.sticky-col{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:12px;min-height:150px;display:flex;flex-direction:column}
+.sticky-col.p1{border-top:3px solid #e08e8e}
+.sticky-col.p2{border-top:3px solid #e8c36d}
+.sticky-col.p3{border-top:3px solid #7eb8c9}
+.sticky-col.p4{border-top:3px solid #b4b2a9}
+.sticky-col .col-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.sticky-col .col-title{font-size:13px;font-weight:700}
+.sticky-col .col-sub{font-size:11px;color:var(--muted);margin-bottom:10px}
+.sticky-col .col-body{flex:1}
+.sticky{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;font-size:13px;line-height:1.55;cursor:grab;transition:transform .12s,box-shadow .12s,border-color .12s}
+.sticky:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(74,63,53,.07);border-color:var(--pri2)}
+.sticky.dragging{opacity:.45;cursor:grabbing}
+.sticky-col.dragover{background:#f7f0e8;border-color:var(--pri2)}
+.sticky .acts{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.sticky .acts .btn{margin:0}
+.sticky-add{display:flex;gap:6px;margin-top:8px}
+.sticky-add input{font-size:13px;padding:9px 11px;border-radius:10px}
+.sticky-empty{font-size:12px;color:var(--muted);text-align:center;padding:14px 0;border:1px dashed var(--line);border-radius:10px}
+
+/* 便利贴转线/网/树 选择器 */
+.convert-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
+.convert-opt{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg2);cursor:pointer;transition:all .15s}
+.convert-opt:hover{border-color:var(--pri2);background:#fffaf6}
+.convert-opt .ico{font-size:20px}
+.convert-opt .t{font-size:14px;font-weight:600}
+.convert-opt .d{font-size:11px;color:var(--muted)}
 
 /* Modal / Sheet */
 .modal{position:fixed;inset:0;z-index:90;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;-webkit-overflow-scrolling:touch}
@@ -236,6 +284,25 @@ textarea{min-height:90px;resize:vertical}
 .probe-box{border:1px dashed var(--line);border-radius:12px;padding:10px;background:var(--bg2);margin-top:8px}
 
 ::-webkit-scrollbar{width:0;height:0}
+
+/* ===== 便利贴看板 ===== */
+.notes-board{display:grid;grid-template-columns:1fr;gap:14px;padding-top:4px}
+@media(min-width:760px){ .notes-board{grid-template-columns:repeat(2,1fr)} }
+@media(min-width:1100px){ .notes-board{grid-template-columns:repeat(4,1fr)} }
+.note-col{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;min-height:140px}
+.note-col-head{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;margin-bottom:2px}
+.note-col-head .dot{width:10px;height:10px;border-radius:50%;background:var(--zc);flex-shrink:0}
+.note-col-head .cnt{margin-left:auto;font-size:12px;font-weight:600;color:var(--muted);background:var(--card);border:1px solid var(--line);border-radius:99px;padding:1px 9px}
+.note-tip{margin-bottom:8px}
+.note-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.note-empty{font-size:13px;color:var(--muted);text-align:center;padding:14px 0;opacity:.6}
+.note-card{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--zc);border-radius:12px;padding:10px 11px;box-shadow:0 3px 10px rgba(74,63,53,.05);transition:transform .12s,box-shadow .12s;cursor:grab}
+.note-card:active{cursor:grabbing}
+.note-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(74,63,53,.1)}
+.note-text{font-size:14px;line-height:1.5;word-break:break-word;white-space:pre-wrap;min-height:20px;cursor:text}
+.note-bar{display:flex;gap:6px;align-items:center;margin-top:10px}
+.note-move{flex:1;min-width:0;width:auto;padding:5px 8px;font-size:12px;border-radius:8px}
+.note-bar .btn.xs{padding:4px 7px}
 </style>
 </head>
 <body>
@@ -247,6 +314,7 @@ textarea{min-height:90px;resize:vertical}
       <button data-tab="now" class="on"><span class="ic">☀️</span>今天</button>
       <button data-tab="quests"><span class="ic">📋</span>任务</button>
       <button data-tab="capture"><span class="ic">📝</span>记录</button>
+      <button data-tab="notes"><span class="ic">🗒️</span>便利贴</button>
       <button data-tab="me"><span class="ic">⚙️</span>我的</button>
     </nav>
     <div class="side-foot">数据保存在本机浏览器<br>定期导出备份</div>
@@ -265,6 +333,7 @@ textarea{min-height:90px;resize:vertical}
       <section class="view on" id="view-now"></section>
       <section class="view" id="view-quests"></section>
       <section class="view" id="view-capture"></section>
+      <section class="view" id="view-notes"></section>
       <section class="view" id="view-me"></section>
     </main>
   </div>
@@ -273,9 +342,10 @@ textarea{min-height:90px;resize:vertical}
 <nav class="tabbar" id="tabbar">
   <button data-tab="now" class="on"><span class="ic">☀️</span>今天</button>
   <button data-tab="quests"><span class="ic">📋</span>任务</button>
-  <button data-tab="capture"><span class="ic">📝</span>记录</button>
-  <button data-tab="me"><span class="ic">⚙️</span>我的</button>
-</nav>
+      <button data-tab="capture"><span class="ic">📝</span>记录</button>
+      <button data-tab="notes"><span class="ic">🗒️</span>便利贴</button>
+      <button data-tab="me"><span class="ic">⚙️</span>我的</button>
+    </nav>
 
 <div id="modal"></div>
 <div id="toast" class="toast"></div>
@@ -312,6 +382,14 @@ const DRAWERS=[
   {id:'conclusion',name:'结论/输出',color:'#b8a0c9'},
   {id:'action',name:'行动/下一步',color:'#8fb88e'}
 ];
+
+const NOTE_ZONES=[
+  {id:'ei',name:'重要且紧急',color:'#e08e8e',tip:'马上做'},
+  {id:'im',name:'重要不紧急',color:'#e8c36d',tip:'排期做'},
+  {id:'ur',name:'紧急不重要',color:'#7eb8c9',tip:'可交办'},
+  {id:'lt',name:'待定 / 搁置',color:'#b8a0c9',tip:'有空再看'}
+];
+function noteZone(id){ return NOTE_ZONES.find(function(z){ return z.id===id; })||NOTE_ZONES[3]; }
 
 function classify(t){
   const s=t.toLowerCase();
@@ -361,6 +439,7 @@ function migrate(){
   if(!S.handoff) S.handoff={three:'',two:'',one:'',morning:'',date:''};
   if(!S.meta) S.meta={streak:0,lastDay:null,best:0};
   if(!S.trash) S.trash=[];
+  if(!S.notes) S.notes=[];
   S.quests.forEach(function(q){
     if(!q.id) q.id=uid();
     if(!q.net) q.net={nodes:[],edges:[],nextX:50,nextY:60,viewOffset:{x:0,y:0}};
@@ -377,7 +456,7 @@ function migrate(){
 function sampleData(){
   const q=newQuest('示例：写一份季度总结');
   q.today=true;
-  return {settings:{wake:'09:00',start:'10:00',wind:'22:00',sleep:'00:30',theme:'warm',autoNext:true,morningBlock:true},quests:[q],parking:{insight:[],question:[],block:[],idea:[],quote:[]},distills:[],log:{sessions:[],completions:[]},handoff:{three:'',two:'',one:'',morning:'',date:''},meta:{streak:0,lastDay:null,best:0}};
+  return {settings:{wake:'09:00',start:'10:00',wind:'22:00',sleep:'00:30',theme:'warm',autoNext:true,morningBlock:true},quests:[q],parking:{insight:[],question:[],block:[],idea:[],quote:[]},distills:[],log:{sessions:[],completions:[]},handoff:{three:'',two:'',one:'',morning:'',date:''},meta:{streak:0,lastDay:null,best:0},notes:[{id:uid(),text:'欢迎使用便利贴：按重要程度拖到不同区域，右键或点菜单可加入线/网/树',zone:'im',created:Date.now(),updated:Date.now()}]};
 }
 
 function parseHM(s){ const p=s.split(':'); return parseInt(p[0])*60+parseInt(p[1]); }
@@ -411,7 +490,7 @@ function nextPhaseTransition(){
 }
 
 function findQuest(id){ return S.quests.find(function(q){ return q.id===id; }); }
-function allLineItems(q){ if(q) return q.line.map(function(n){ return {n:n,q:q}; }); const a=[]; S.quests.forEach(function(q){ q.line.forEach(function(n){ a.push({n:n,q:q}); }); }); return a; }
+function allLineItems(q){ if(q) return collectAllLineItems(q.line).map(function(n){ return {n:n,q:q}; }); const a=[]; S.quests.forEach(function(q){ collectAllLineItems(q.line).forEach(function(n){ a.push({n:n,q:q}); }); }); return a; }
 function nextLineItem(){
   const all=allLineItems();
   const pending=all.filter(function(x){ return !x.n.done; });
@@ -420,7 +499,7 @@ function nextLineItem(){
   const use=today.length?today:pending;
   return use.sort(function(a,b){ return (a.n.est||99)-(b.n.est||99); })[0];
 }
-function progress(q){ const a=q.line; if(!a.length) return 0; return Math.round(a.filter(function(s){ return s.done; }).length/a.length*100); }
+function progress(q){ const a=collectAllLineItems(q.line); if(!a.length) return 0; return Math.round(a.filter(function(s){ return s.done; }).length/a.length*100); }
 function bumpStreak(){
   const t=todayKey();
   if(S.meta.lastDay!==t){
@@ -439,10 +518,10 @@ function renderAll(){
   document.getElementById('modal').innerHTML='';
   document.querySelectorAll('.tabbar button').forEach(function(b){ b.classList.toggle('on',b.dataset.tab===TAB); });
   document.querySelectorAll('.sidebar nav button').forEach(function(b){ b.classList.toggle('on',b.dataset.tab===TAB); });
-  const titles={now:'今天',quests:'任务仓库',capture:'记录 & 停车区',me:'我的 & 设置'};
+  const titles={now:'今天',quests:'任务仓库',capture:'记录 & 停车区',notes:'便利贴看板',me:'我的 & 设置'};
   const pt=document.getElementById('page-title'); if(pt) pt.textContent=titles[TAB]||'NeuroOS';
   document.querySelectorAll('.view').forEach(function(v){ v.classList.toggle('on',v.id==='view-'+TAB); });
-  const fn={now:vNow,quests:vQuests,capture:vCapture,me:vMe}[TAB];
+  const fn={now:vNow,quests:vQuests,capture:vCapture,notes:vNotes,me:vMe}[TAB];
   if(fn) fn();
 }
 
@@ -475,6 +554,41 @@ function renderSingleStep(){
   m.innerHTML='<div class="single-step"><div class="label">只做这一步，其他什么都不用想</div><div class="task">'+esc(n.n.title)+'</div><div class="meta">来自：'+esc(n.q.title)+(n.n.est?' · 预估 '+n.n.est+' 分钟':'')+'</div><div class="actions"><button class="btn ok block big" data-act="single-done">✓ 我完成了</button><button class="btn ghost block" data-act="single-skip">跳过，换下一步</button><button class="btn block" data-act="single-exit">退出单步模式</button></div></div>';
 }
 function findStepById(id){ for(let i=0;i<S.quests.length;i++){ const n=S.quests[i].line.find(function(x){ return x.id===id; }); if(n) return {n:n,q:S.quests[i]}; } return null; }
+function findLineItemDeep(qid,sid){
+  var q=findQuest(qid); if(!q) return null;
+  function search(items){
+    for(var i=0;i<items.length;i++){
+      if(items[i].id===sid) return {n:items[i],q:q};
+      if(items[i].children&&items[i].children.length){
+        var r=search(items[i].children);
+        if(r) return r;
+      }
+    }
+    return null;
+  }
+  return search(q.line);
+}
+function removeLineItemDeep(q,sid){
+  for(var i=0;i<q.line.length;i++){
+    if(q.line[i].id===sid){ return q.line.splice(i,1)[0]; }
+    if(q.line[i].children&&q.line[i].children.length){
+      var r=removeLineItemDeep({line:q.line[i].children},sid);
+      if(r){ q.line[i].children=q.line[i].children.filter(function(x){ return x.id!==sid; }); if(!q.line[i].children.length) delete q.line[i].children; return r; }
+    }
+  }
+  return null;
+}
+function collectAllLineItems(items){
+  var result=[];
+  function walk(arr){
+    for(var i=0;i<arr.length;i++){
+      result.push(arr[i]);
+      if(arr[i].children&&arr[i].children.length) walk(arr[i].children);
+    }
+  }
+  walk(items);
+  return result;
+}
 
 function vQuests(){
   const v=document.getElementById('view-quests');
@@ -591,7 +705,19 @@ function vTree(q){
   return '<h2 class="card-title">🌳 树状翻译区</h2><div class="card" style="padding:12px 14px"><div class="tiny">把节点拖进下面 5 类抽屉。放不进去说明不够具体，回网状区再切。</div></div><div class="row" style="margin-bottom:10px"><button class="btn pri sm" data-act="tree-add" data-id="'+q.id+'">➕ 新增抽屉项</button><button class="btn sm" data-act="to-line" data-id="'+q.id+'">✅ 生成执行线</button><button class="btn sm" data-act="back-net" data-id="'+q.id+'">↩ 回网状区</button><button class="btn sm" data-act="tree-expand-all" data-id="'+q.id+'">📂 全部展开</button><button class="btn sm" data-act="tree-collapse-all" data-id="'+q.id+'">📁 全部收起</button></div><div class="row">'+q.tree.drawers.map(function(d){ const collapsed=d.collapsed; return '<div style="flex:1;min-width:140px" ondragover="event.preventDefault()" ondrop="dropToDrawer(event,\''+q.id+'\',\''+d.id+'\')"><div class="tree-root" style="border-left:3px solid '+d.color+'"><h4 style="color:'+d.color+'">'+d.name+' <button class="btn xs ghost" data-act="tree-toggle" data-id="'+q.id+'" data-did="'+d.id+'">'+(collapsed?'▶':'▼')+'</button></h4>'+(collapsed?'<div class="tiny muted">'+d.items.length+' 项（已收起）</div>':d.items.map(function(it){ return '<div class="tree-item" draggable="true" ondragstart="dragItem(event,\''+q.id+'\',\''+d.id+'\',\''+it.id+'\')"><span class="handle">⋮⋮</span><span class="grow">'+esc(it.text)+'</span><button class="btn xs ghost" onclick="removeTreeItem(\''+q.id+'\',\''+d.id+'\',\''+it.id+'\')">✕</button></div>'; }).join(''))+(d.items.length?'':'<div class="tiny muted">空</div>')+'</div></div>'; }).join('')+'</div>';
 }
 function vLine(q){
-  return '<h2 class="card-title">✅ 线性执行区</h2><div class="card" style="padding:12px 14px"><div class="tiny">这里是「手上走线」。新想法丢停车区，不许改这里。</div></div><div class="row" style="margin-bottom:10px"><input id="line-input" class="grow" placeholder="添加一步" style="flex:2"><input type="number" id="line-est" placeholder="分钟" value="15" min="1" max="180" style="width:70px"><button class="btn pri sm" data-act="line-add" data-id="'+q.id+'">添加</button><button class="btn sm" data-act="back-tree" data-id="'+q.id+'">↩ 回树</button></div>'+(q.line.length?q.line.map(function(n){ return '<div class="line-step '+(n.done?'done':'')+'"><div class="chk '+(n.done?'on':'')+'" data-act="line-toggle" data-qid="'+q.id+'" data-id="'+n.id+'">✓</div><div class="grow"><div class="row" style="gap:6px;flex-wrap:wrap"><span style="font-weight:500;'+(n.done?'text-decoration:line-through':'')+'">'+esc(n.title)+'</span><span class="badge">'+(n.est||0)+'分</span>'+(n.today?'<span class="badge linec">今天</span>':'')+'</div><div class="row" style="margin-top:6px;gap:5px"><button class="btn xs" data-act="line-today" data-qid="'+q.id+'" data-id="'+n.id+'">'+(n.today?'移出':'☀️ 今天')+'</button><button class="btn xs ghost" data-act="line-split" data-qid="'+q.id+'" data-id="'+n.id+'">🔪 切小</button><button class="btn xs ghost" data-act="line-del" data-qid="'+q.id+'" data-id="'+n.id+'">🗑</button></div></div></div>'; }).join(''):'<div class="empty tiny">执行线为空。从树状区生成，或手动添加。</div>')+'<div class="row" style="margin-top:12px"><button class="btn sm block" data-act="line-focus-next" data-id="'+q.id+'">🎯 专注下一步</button><button class="btn sm block" data-act="line-pick" data-id="'+q.id+'">🎲 随机挑一步</button></div>';
+  function renderLineStep(n,qid,depth){
+    depth=depth||0;
+    var hasChildren=n.children&&n.children.length>0;
+    var isCollapsed=n.collapsed;
+    var doneKids=hasChildren?n.children.filter(function(c){ return c.done; }).length:0;
+    var foldHTML=hasChildren?'<div class="fold-btn" data-act="line-fold" data-qid="'+qid+'" data-id="'+n.id+'" title="'+(isCollapsed?'展开 '+n.children.length+' 个子步骤':'收起 '+n.children.length+' 个子步骤')+'">'+(isCollapsed?'\u25B6':'\u25BC')+'<span class="cnt">'+n.children.length+'</span></div>':'<div class="fold-spacer"></div>';
+    var childrenHTML='';
+    if(hasChildren&&!isCollapsed){
+      childrenHTML='<div class="line-children">'+n.children.map(function(c){ return renderLineStep(c,qid,depth+1); }).join('')+'</div>';
+    }
+    return '<div class="line-step depth-'+depth+' '+(n.done?'done':'')+'" data-depth="'+depth+'">'+foldHTML+'<div class="chk '+(n.done?'on':'')+'" data-act="line-toggle" data-qid="'+qid+'" data-id="'+n.id+'">\u2713</div><div class="grow"><div class="row" style="gap:6px;flex-wrap:wrap"><span style="font-weight:500;'+(n.done?'text-decoration:line-through':'')+'">'+esc(n.title)+'</span><span class="badge">'+(n.est||0)+'\u5206</span>'+(n.today?'<span class="badge linec">\u4ECA\u5929</span>':'')+(hasChildren?'<span class="badge">'+doneKids+'/'+n.children.length+' \u5B50\u6B65</span>':'')+'</div><div class="row" style="margin-top:6px;gap:5px"><button class="btn xs" data-act="line-today" data-qid="'+qid+'" data-id="'+n.id+'">'+(n.today?'\u79FB\u51FA':'\u2600\uFE0F \u4ECA\u5929')+'</button><button class="btn xs ghost" data-act="line-split" data-qid="'+qid+'" data-id="'+n.id+'">\u{1F52A} \u5207\u5C0F</button><button class="btn xs ghost" data-act="line-sub" data-qid="'+qid+'" data-id="'+n.id+'">+\u5B50\u6B65</button>'+(hasChildren?'<button class="btn xs ghost" data-act="line-del-children" data-qid="'+qid+'" data-id="'+n.id+'">\u5220\u5B50\u6B65</button>':'')+'<button class="btn xs ghost" data-act="line-del" data-qid="'+qid+'" data-id="'+n.id+'">\u{1F5D1}</button></div></div></div>'+childrenHTML;
+  }
+  return '<h2 class="card-title">\u2705 \u7EBF\u6027\u6267\u884C\u533A</h2><div class="card" style="padding:12px 14px"><div class="tiny">\u8FD9\u91CC\u662F\u300C\u624B\u4E0A\u8D70\u7EBF\u300D\u3002\u65B0\u60F3\u6CD5\u4E22\u505C\u8F66\u533A\uFF0C\u4E0D\u8BB8\u6539\u8FD9\u91CC\u3002\u70B9 \u25B6/\u25BC \u6536\u7EB3\u5B50\u6B65\u9AA4\u3002</div></div><div class="row" style="margin-bottom:10px"><input id="line-input" class="grow" placeholder="\u6DFB\u52A0\u4E00\u6B65" style="flex:2"><input type="number" id="line-est" placeholder="\u5206\u949F" value="15" min="1" max="180" style="width:70px"><button class="btn pri sm" data-act="line-add" data-id="'+q.id+'">\u6DFB\u52A0</button><button class="btn sm" data-act="back-tree" data-id="'+q.id+'">\u21A9 \u56DE\u6811</button>'+(q.line.some(function(n){ return n.children&&n.children.length; })?'<button class="btn sm" data-act="line-expand-all" data-id="'+q.id+'">\u{1F4C2} \u5168\u90E8\u5C55\u5F00</button><button class="btn sm" data-act="line-collapse-all" data-id="'+q.id+'">\u{1F4C1} \u5168\u90E8\u6536\u8D77</button>':'')+'</div>'+(q.line.length?q.line.map(function(n){ return renderLineStep(n,q.id,0); }).join(''):'<div class="empty tiny">\u6267\u884C\u7EBF\u4E3A\u7A7A\u3002\u4ECE\u6811\u72B6\u533A\u751F\u6210\uFF0C\u6216\u624B\u52A8\u6DFB\u52A0\u3002</div>')+'<div class="row" style="margin-top:12px"><button class="btn sm block" data-act="line-focus-next" data-id="'+q.id+'">\u{1F3AF} \u4E13\u6CE8\u4E0B\u4E00\u6B65</button><button class="btn sm block" data-act="line-pick" data-id="'+q.id+'">\u{1F3B2} \u968F\u673A\u6311\u4E00\u6B65</button></div>';
 }
 
 function vCapture(){
@@ -621,12 +747,53 @@ function vMe(){
 
 function dName(id){ return {problem:'问题',hypothesis:'假设',solution:'方案',conclusion:'结论',action:'行动'}[id]||id; }
 
+/* ===== 便利贴看板 ===== */
+function vNotes(){
+  const v=document.getElementById('view-notes');
+  const cols=NOTE_ZONES.map(function(z){
+    const notes=S.notes.filter(function(n){ return n.zone===z.id; }).sort(function(a,b){ return b.updated-a.updated; });
+    const cards=notes.length?notes.map(function(n){
+      return '<div class="note-card" draggable="true" data-id="'+n.id+'" ondragstart="noteDragStart(event,\''+n.id+'\')" style="--zc:'+z.color+'">'
+        +'<div class="note-text" data-act="note-edit" data-id="'+n.id+'">'+esc(n.text)+'</div>'
+        +'<div class="note-bar">'
+        +'<select class="note-move" data-id="'+n.id+'">'+NOTE_ZONES.map(function(zz){ return '<option value="'+zz.id+'"'+(zz.id===z.id?' selected':'')+'>'+zz.name+'</option>'; }).join('')+'</select>'
+        +'<button class="btn xs" data-act="note-to" data-id="'+n.id+'" title="加入任务">➕</button>'
+        +'<button class="btn xs ghost" data-act="note-del" data-id="'+n.id+'" title="删除">🗑</button>'
+        +'</div></div>';
+    }).join(''):'<div class="note-empty">空</div>';
+    return '<div class="note-col" data-zone="'+z.id+'" ondragover="event.preventDefault()" ondrop="noteDrop(event,\''+z.id+'\')" style="--zc:'+z.color+'">'
+      +'<div class="note-col-head"><span class="dot"></span>'+z.name+'<span class="cnt">'+notes.length+'</span></div>'
+      +'<div class="tiny muted note-tip">'+z.tip+'</div>'
+      +'<button class="btn sm block" data-act="note-add" data-zone="'+z.id+'">+ 便利贴</button>'
+      +'<div class="note-list">'+cards+'</div></div>';
+  }).join('');
+  v.innerHTML='<div class="notes-board">'+cols+'</div>';
+}
+
+function openNoteSheet(n){
+  sheet('<h3>✏️ 编辑便利贴</h3><textarea id="note-text" placeholder="写点什么...">'+esc(n.text)+'</textarea><div class="row" style="margin-top:8px"><select id="note-zone" style="flex:1">'+NOTE_ZONES.map(function(z){ return '<option value="'+z.id+'"'+(z.id===n.zone?' selected':'')+'>'+z.name+'</option>'; }).join('')+'</select></div><button class="btn pri block" style="margin-top:12px" data-act="note-save" data-id="'+n.id+'">保存</button><button class="btn ghost block" style="margin-top:8px" data-act="close-modal">取消</button><button class="btn warn block" style="margin-top:8px" data-act="note-del" data-id="'+n.id+'">删除</button>');
+}
+function openNoteToSheet(n){
+  const qOpts=S.quests.map(function(q){ return '<option value="'+q.id+'">'+esc(q.title)+'</option>'; }).join('');
+  sheet('<h3>➕ 加入任务</h3><div class="tiny muted" style="margin-bottom:10px">'+esc(n.text)+'</div>'
+    +'<label class="tiny muted">目标任务</label><select id="nt-quest" style="margin-top:4px">'+(qOpts||'<option value="">（暂无任务）</option>')+'</select>'
+    +'<label class="tiny muted" style="display:block;margin-top:10px">加入为</label><select id="nt-form" style="margin-top:4px"><option value="line">✅ 线（执行步）</option><option value="tree">🌳 树（抽屉项）</option><option value="net">🕸 网（节点）</option></select>'
+    +'<label class="tiny muted" id="nt-drawer-label" style="display:block;margin-top:10px">选择抽屉</label><select id="nt-drawer" style="margin-top:4px">'+DRAWERS.map(function(d){ return '<option value="'+d.id+'">'+d.name+'</option>'; }).join('')+'</select>'
+    +'<button class="btn pri block" style="margin-top:14px" data-act="note-to-confirm" data-id="'+n.id+'">加入</button><button class="btn ghost block" style="margin-top:8px" data-act="close-modal">取消</button>');
+  var formSel=document.getElementById('nt-form'), drawerLabel=document.getElementById('nt-drawer-label'), drawerSel=document.getElementById('nt-drawer');
+  if(formSel){ formSel.onchange=function(){ var isTree=formSel.value==='tree'; drawerLabel.style.display=isTree?'block':'none'; drawerSel.style.display=isTree?'block':'none'; }; formSel.onchange(); }
+}
+
 /* Events */
 document.addEventListener('keydown',function(e){
   if(e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA' || e.target.tagName==='SELECT') return;
   if(e.key==='n' || e.key==='N'){ e.preventDefault(); openNewQuestSheet(); }
   if(e.key==='f' || e.key==='F'){ e.preventDefault(); const next=nextLineItem(); if(next){ singleStep={id:next.n.id,start:Date.now()}; renderAll(); } }
   if(e.key==='Escape'){ closeModal(); }
+});
+document.addEventListener('change',function(e){
+  const s=e.target.closest('.note-move');
+  if(s){ const n=S.notes.find(function(x){ return x.id===s.dataset.id; }); if(n){ n.zone=s.value; n.updated=Date.now(); save(); renderAll(); } }
 });
 document.addEventListener('click',function(e){
   if(singleStep){
@@ -717,11 +884,41 @@ document.addEventListener('click',function(e){
       if(q && title){ q.line.push({id:uid(),title:title,est:Math.max(1,Math.min(180,est)),done:false,spent:0,today:false,created:Date.now()}); save(); renderAll(); } break;
     }
     case 'line-toggle':{ toggleStep(b.dataset.id); break; }
-    case 'line-today':{ const q=findQuest(b.dataset.qid); const n=q.line.find(function(x){ return x.id===b.dataset.id; }); if(n){ n.today=!n.today; save(); renderAll(); } break; }
-    case 'line-split':{ const q=findQuest(b.dataset.qid); const n=q.line.find(function(x){ return x.id===b.dataset.id; }); if(n){ const e=Math.max(5,Math.round((n.est||20)/2)); n.est=e; q.line.splice(q.line.indexOf(n)+1,0,{id:uid(),title:n.title+'(后半)',est:e,done:false,spent:0,today:false,created:Date.now()}); save(); renderAll(); toast('已切半'); } break; }
-    case 'line-del':{ const q=findQuest(b.dataset.qid); const n=q.line.find(function(x){ return x.id===b.dataset.id; }); if(n) trashItem('line',n,q.id); q.line=q.line.filter(function(x){ return x.id!==b.dataset.id; }); save(); renderAll(); break; }
-    case 'line-focus-next':{ const q=findQuest(id); const items=q.line.filter(function(n){ return !n.done; }).sort(function(x,y){ return (x.est||99)-(y.est||99); }); if(items.length){ singleStep={id:items[0].id,start:Date.now()}; renderAll(); } else toast('都做完了'); break; }
-    case 'line-pick':{ const q=findQuest(id); const items=q.line.filter(function(n){ return !n.done; }); if(items.length){ const pick=items[Math.floor(Math.random()*items.length)]; singleStep={id:pick.id,start:Date.now()}; renderAll(); } else toast('都做完了'); break; }
+    case 'line-today':{ const r=findLineItemDeep(b.dataset.qid,b.dataset.id); if(r){ r.n.today=!r.n.today; save(); renderAll(); } break; }
+    case 'line-split':{ const r=findLineItemDeep(b.dataset.qid,b.dataset.id); if(r){ const n=r.n; const e=Math.max(5,Math.round((n.est||20)/2)); n.est=e; if(!n.children) n.children=[]; n.children.push({id:uid(),title:n.title+'(后半)',est:e,done:false,spent:0,today:false,created:Date.now()}); n.collapsed=false; save(); renderAll(); toast('已切半为子步骤'); } break; }
+    case 'line-sub':{ openLineSubSheet(b.dataset.qid,b.dataset.id); break; }
+    case 'line-sub-confirm':{
+      const r=findLineItemDeep(b.dataset.qid,b.dataset.id); if(!r) break;
+      const ti=document.getElementById('sub-title'); const t=ti&&ti.value.trim(); if(!t) return toast('写个标题');
+      const ei=document.getElementById('sub-est'); const e=parseInt(ei&&ei.value)||10;
+      const n=r.n; if(!n.children) n.children=[];
+      n.children.push({id:uid(),title:t,est:e,done:false,spent:0,today:false,created:Date.now()});
+      n.collapsed=false; save(); closeModal(); renderAll(); toast('已添加子步骤'); break;
+    }
+    case 'line-fold':{ const r=findLineItemDeep(b.dataset.qid,b.dataset.id); if(r){ r.n.collapsed=!r.n.collapsed; save(); renderAll(); } break; }
+    case 'line-expand-all':{ const q=findQuest(id); if(q) collectAllLineItems(q.line).forEach(function(n){ n.collapsed=false; }); save(); renderAll(); toast('已全部展开'); break; }
+    case 'line-collapse-all':{ const q=findQuest(id); if(q) collectAllLineItems(q.line).forEach(function(n){ if(n.children&&n.children.length) n.collapsed=true; }); save(); renderAll(); toast('已全部收起'); break; }
+    case 'line-del-children':{ const r=findLineItemDeep(b.dataset.qid,b.dataset.id); if(r&&r.n.children&&r.n.children.length){ if(confirm('删除这个步骤下的 '+r.n.children.length+' 个子步骤？（进入回收站）')){ r.n.children.forEach(function(c){ trashItem('line',c,r.q.id); }); delete r.n.children; r.n.collapsed=false; save(); renderAll(); toast('已删除子步骤'); } } break; }
+    case 'line-del':{ const q=findQuest(b.dataset.qid); var removed=removeLineItemDeep(q,b.dataset.id); if(removed) trashItem('line',removed,q.id); save(); renderAll(); break; }
+    case 'line-focus-next':{ const q=findQuest(id); var items=collectAllLineItems(q.line).filter(function(n){ return !n.done; }).sort(function(x,y){ return (x.est||99)-(y.est||99); }); if(items.length){ singleStep={id:items[0].id,start:Date.now()}; renderAll(); } else toast('都做完了'); break; }
+    case 'line-pick':{ const q=findQuest(id); var items=collectAllLineItems(q.line).filter(function(n){ return !n.done; }); if(items.length){ const pick=items[Math.floor(Math.random()*items.length)]; singleStep={id:pick.id,start:Date.now()}; renderAll(); } else toast('都做完了'); break; }
+
+    /* 便利贴 */
+    case 'note-add':{ S.notes.unshift({id:uid(),text:'新便利贴',zone:b.dataset.zone||'ei',created:Date.now(),updated:Date.now()}); save(); renderAll(); const ns=S.notes[0]; if(ns) openNoteSheet(ns); break; }
+    case 'note-edit':{ const n=S.notes.find(function(x){ return x.id===id; }); if(n) openNoteSheet(n); break; }
+    case 'note-save':{ const n=S.notes.find(function(x){ return x.id===id; }); const ta=document.getElementById('note-text'); const za=document.getElementById('note-zone'); if(n&&ta){ n.text=ta.value.trim()||'未命名便利贴'; n.zone=za&&za.value||n.zone; n.updated=Date.now(); save(); closeModal(); renderAll(); } break; }
+    case 'note-del':{ S.notes=S.notes.filter(function(x){ return x.id!==id; }); save(); closeModal(); renderAll(); break; }
+    case 'note-to':{ const n=S.notes.find(function(x){ return x.id===id; }); if(n) openNoteToSheet(n); break; }
+    case 'note-to-confirm':{
+      const n=S.notes.find(function(x){ return x.id===id; }); if(!n) break;
+      const qEl=document.getElementById('nt-quest'); const q=findQuest(qEl&&qEl.value); if(!q) return toast('没有可选任务，先去建一个');
+      const formEl=document.getElementById('nt-form'); const form=formEl&&formEl.value;
+      if(form==='line'){ q.line.push({id:uid(),title:n.text,est:15,done:false,spent:0,today:false,created:Date.now()}); }
+      else if(form==='tree'){ const dSel=document.getElementById('nt-drawer'); const did=dSel&&dSel.value||'action'; const d=q.tree.drawers.find(function(x){ return x.id===did; }); if(d) d.items.push({id:uid(),text:n.text}); }
+      else if(form==='net'){ const nx=(q.net.nextX||60)+ (q.net.nodes.length%6)*30; const ny=(q.net.nextY||60)+ Math.floor(q.net.nodes.length/6)*40; q.net.nodes.push({id:uid(),text:n.text,x:nx,y:ny,highlighted:false}); }
+      q.updated=Date.now(); save(); closeModal(); renderAll(); toast('已加入'+(form==='line'?'线':form==='tree'?'树':'网'));
+      break;
+    }
 
     case 'toggle-probe':{ const q=findQuest(id); q.probe.active=!q.probe.active; save(); renderAll(); break; }
     case 'save-probe':{
@@ -822,6 +1019,11 @@ function skipSingleStep(){
   singleStep={id:next.n.id,start:Date.now()}; renderAll();
 }
 
+function openLineSubSheet(qid,sid){
+  const r=findLineItemDeep(qid,sid); if(!r) return;
+  const n=r.n; const kids=(n.children||[]);
+  sheet('<h3>➕ 加子步骤</h3><div class="tiny muted" style="margin-bottom:10px">挂在：'+esc(n.title)+'</div><input id="sub-title" placeholder="子步骤标题，比如：找 2 个可靠来源"><div class="row" style="margin-top:8px"><span class="tiny" style="min-width:36px">预估</span><input type="number" id="sub-est" value="10" min="1" max="180" style="width:90px"><span class="tiny">分钟</span></div><button class="btn pri block" style="margin-top:12px" data-act="line-sub-confirm" data-qid="'+qid+'" data-id="'+n.id+'">添加</button><button class="btn ghost block" style="margin-top:8px" data-act="close-modal">取消</button>'+(kids.length?'<div class="tiny muted" style="margin-top:12px">已有 '+kids.length+' 个子步骤</div>':''));
+}
 function openNewQuestSheet(){
   sheet('<h3>新建任务</h3><input id="q-title" placeholder="例如：验证新的招聘流程 / 写年度总结"><select id="q-type" style="margin-top:8px"><option value="project">项目</option><option value="study">学习/研究</option><option value="probe">探针实验</option><option value="life">生活/杂务</option></select><button class="btn pri block" style="margin-top:12px" data-act="create-quest">创建</button><button class="btn ghost block" style="margin-top:8px" data-act="close-modal">取消</button>');
 }
@@ -867,6 +1069,8 @@ window.dropToDrawer=function(ev,qid,targetDid){
 window.removeTreeItem=function(qid,did,iid){
   const q=findQuest(qid); const d=q.tree.drawers.find(function(x){ return x.id===did; }); const it=d.items.find(function(x){ return x.id===iid; }); if(it) trashItem('tree',{drawerId:did,item:it},q.id); d.items=d.items.filter(function(x){ return x.id!==iid; }); save(); renderAll();
 };
+window.noteDragStart=function(ev,id){ ev.dataTransfer.setData('text/plain',id); };
+window.noteDrop=function(ev,zone){ ev.preventDefault(); const id=ev.dataTransfer.getData('text/plain'); const n=S.notes.find(function(x){ return x.id===id; }); if(n){ n.zone=zone; n.updated=Date.now(); save(); renderAll(); } };
 
 function esc(s){ return String(s===undefined||s===null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
