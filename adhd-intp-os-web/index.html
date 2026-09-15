@@ -276,6 +276,14 @@ textarea{min-height:90px;resize:vertical}
 
 .kv{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
 .kv:last-child{border:none}
+.kv.kv-clickable{cursor:pointer;transition:background .12s;border-radius:8px;padding-left:8px;padding-right:8px;margin:0 -8px}
+.kv.kv-clickable:hover{background:var(--bg2)}
+.kv.kv-clickable:active{background:var(--bg2)}
+.recent-head{user-select:none;-webkit-tap-highlight-color:transparent}
+.chevron{display:inline-block;font-size:12px;color:var(--muted);transition:transform .2s ease}
+.chevron.collapsed{transform:rotate(-90deg)}
+.recent-body{overflow:hidden;transition:max-height .25s ease,opacity .2s ease;max-height:2200px;opacity:1}
+.recent-body.collapsed{max-height:0;opacity:0}
 
 .bar-chart{display:flex;align-items:flex-end;gap:4px;height:80px;margin-top:8px}
 .bar-chart div{flex:1;background:var(--pri2);border-radius:5px 5px 0 0;min-height:4px;position:relative}
@@ -361,7 +369,7 @@ const KEY='neuroos-v1';
 const uid=function(){ return Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4); };
 const DAY=864e5;
 const todayKey=function(){ return new Date().toLocaleDateString('sv'); };
-let S,TAB='now',singleStep=null,openQuest=null,selectedNetNodes=[];
+let S,TAB='now',singleStep=null,openQuest=null,selectedNetNodes=[],captureRecentCollapsed=false;
 
 const TEMPLATES={
   write:{label:'写作',steps:[['定一句话核心观点',5],['列3个支撑点',10],['写最烂的第一稿',20],['改一遍',15],['定标题收尾',10]]},
@@ -390,6 +398,8 @@ const NOTE_ZONES=[
   {id:'lt',name:'待定 / 搁置',color:'#b8a0c9',tip:'有空再看'}
 ];
 function noteZone(id){ return NOTE_ZONES.find(function(z){ return z.id===id; })||NOTE_ZONES[3]; }
+
+const PARK_CATS=[{k:'idea',l:'💡 想法'},{k:'question',l:'❓ 问题'},{k:'block',l:'🚧 卡点'},{k:'insight',l:'💎 洞察'},{k:'quote',l:'✍️ 金句'}];
 
 function classify(t){
   const s=t.toLowerCase();
@@ -722,14 +732,15 @@ function vLine(q){
 
 function vCapture(){
   const v=document.getElementById('view-capture');
-  const cats=[{k:'idea',l:'💡 想法'},{k:'question',l:'❓ 问题'},{k:'block',l:'🚧 卡点'},{k:'insight',l:'💎 洞察'},{k:'quote',l:'✍️ 金句'}];
+  const cats=PARK_CATS;
   const items=[];
   cats.forEach(function(c){ S.parking[c.k].forEach(function(it){ items.push({id:it.id,text:it.text,t:it.t,cat:c.k,catLabel:c.l}); }); });
   items.sort(function(a,b){ return b.t-a.t; });
   const parkHTML='<div class="card hoverable"><div class="card-title">快速记录</div><div class="card-sub">脑中冒出什么就先丢这里，不处理。</div><div class="row"><input id="park-text" class="grow" placeholder="突然想到..."><select id="park-cat" style="width:auto;min-width:90px">'+cats.map(function(c){ return '<option value="'+c.k+'">'+c.l+'</option>'; }).join('')+'</select><button class="btn pri" data-act="park-add">记下</button></div></div>';
   const distillHTML='<div class="card hoverable"><div class="card-title">信息蒸馏</div><div class="card-sub">把长资料压成可执行结论：侦察 → 重构 → 分层 → 校验。</div><textarea id="distill-raw" placeholder="粘贴资料、笔记、聊天记录..."></textarea><button class="btn block" data-act="distill-start">开始蒸馏</button></div><div id="distill-steps"></div>';
-  const recentHTML=(items.length?'<div class="card hoverable"><div class="card-title">最近记录</div>'+items.slice(0,20).map(function(it){ return '<div class="list-item"><div><div class="tiny">'+it.catLabel+'</div><div style="font-size:14px">'+esc(it.text)+'</div></div><div class="row"><button class="btn sm" data-act="park-2quest" data-id="'+it.id+'" data-cat="'+it.cat+'">→ 任务</button><button class="btn sm ghost" data-act="park-del" data-id="'+it.id+'" data-cat="'+it.cat+'">✕</button></div></div>'; }).join('')+'</div>':'<div class="card empty"><span class="big">📝</span>还没有记录。</div>');
-  v.innerHTML=parkHTML+'<div class="grid-3">'+distillHTML+recentHTML+'<div class="card hoverable"><div class="card-title">🅿️ 停车区</div><div class="card-sub">按类别查看所有暂存想法。</div>'+cats.map(function(c){ const count=S.parking[c.k].length; return '<div class="kv"><span>'+c.l+'</span><span class="badge">'+count+'</span></div>'; }).join('')+'</div></div>';
+  const rc=captureRecentCollapsed;
+  const recentHTML=(items.length?'<div class="card hoverable"><div class="card-title recent-head" data-act="recent-toggle" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer"><span>最近记录</span><span class="chevron'+(rc?' collapsed':'')+'">▼</span></div><div class="recent-body'+(rc?' collapsed':'')+'">'+items.slice(0,20).map(function(it){ return '<div class="list-item"><div><div class="tiny">'+it.catLabel+'</div><div style="font-size:14px">'+esc(it.text)+'</div></div><div class="row"><button class="btn sm" data-act="park-2quest" data-id="'+it.id+'" data-cat="'+it.cat+'">→ 任务</button><button class="btn sm ghost" data-act="park-del" data-id="'+it.id+'" data-cat="'+it.cat+'">✕</button></div></div>'; }).join('')+'</div></div>':'<div class="card empty"><span class="big">📝</span>还没有记录。</div>');
+  v.innerHTML=parkHTML+'<div class="grid-3">'+distillHTML+recentHTML+'<div class="card hoverable"><div class="card-title">🅿️ 停车区</div><div class="card-sub">点类别查看该类全部暂存想法。</div>'+cats.map(function(c){ const count=S.parking[c.k].length; return '<div class="kv kv-clickable" data-act="park-cat" data-cat="'+c.k+'"><span>'+c.l+'</span><span class="badge">'+count+'</span></div>'; }).join('')+'</div></div>';
 }
 
 function vMe(){
@@ -946,6 +957,13 @@ document.addEventListener('click',function(e){
       S.parking[cat]=S.parking[cat].filter(function(x){ return x.id!==id; });
       const q=newQuest(it.text); S.quests.unshift(q); save(); renderAll(); toast('已转成任务'); break;
     }
+    case 'park-cat':{
+      const cat=b.dataset.cat; const def=PARK_CATS.find(function(c){ return c.k===cat; }); const label=def?def.l:cat; const list=S.parking[cat]||[];
+      const body=list.length?list.slice().reverse().map(function(it){ return '<div class="list-item"><div><div class="tiny">'+label+'</div><div style="font-size:14px">'+esc(it.text)+'</div></div><div class="row"><button class="btn sm" data-act="park-2quest" data-id="'+it.id+'" data-cat="'+cat+'">→ 任务</button><button class="btn sm ghost" data-act="park-del" data-id="'+it.id+'" data-cat="'+cat+'">✕</button></div></div>'; }).join(''):'<div class="tiny muted">该类别暂无暂存想法。</div>';
+      sheet('<h3>'+label+' <span class="badge">'+list.length+'</span></h3><div style="margin-top:10px">'+body+'</div><button class="btn ghost block" style="margin-top:12px" data-act="close-modal">关闭</button>');
+      break;
+    }
+    case 'recent-toggle':{ captureRecentCollapsed=!captureRecentCollapsed; renderAll(); break; }
     case 'distill-start':{
       const rawEl=document.getElementById('distill-raw'); const raw=rawEl&&rawEl.value.trim(); if(!raw) return;
       document.getElementById('distill-steps').innerHTML=distillHTML(raw); break;
